@@ -104,7 +104,7 @@ describe('rewriteMarkdown', () => {
       repositoryRef: 'abc123',
     })).toBe(
       '[B](./reference/b.md#part) '
-      + '[source](https://github.com/deepseek-ai/deepseek-harness/blob/abc123/packages/tool.ts#L2) '
+      + '[source](https://github.com/KevPH2026/deepseek-harness-desktop/blob/abc123/packages/tool.ts#L2) '
       + '[web](https://example.com)\n',
     )
   })
@@ -130,7 +130,7 @@ describe('rewriteMarkdown', () => {
       pages,
       repoRoot: root,
       repositoryRef: 'abc123',
-    })).toBe('![logo](https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/abc123/packages/logo.svg)\n')
+    })).toBe('![logo](https://raw.githubusercontent.com/KevPH2026/deepseek-harness-desktop/abc123/packages/logo.svg)\n')
   })
 
   it('hands an image to the placer and uses the URL it returns', () => {
@@ -209,7 +209,7 @@ describe('rewriteMarkdown', () => {
       repositoryRef: 'abc123',
     })).toBe(
       '[title](./reference/b.md "b.md") '
-      + '[escaped](https://github.com/deepseek-ai/deepseek-harness/blob/abc123/docs/x(y).md)\n',
+      + '[escaped](https://github.com/KevPH2026/deepseek-harness-desktop/blob/abc123/docs/x(y).md)\n',
     )
   })
 
@@ -251,16 +251,17 @@ describe('rewriteMarkdown', () => {
 })
 
 describe('docsPages locale routes', () => {
-  it('redirects both locale roots to their locale-relative quick-start page', () => {
+  it('publishes both locale roots as localized desktop product pages', () => {
     const homes = docsPages.filter(page => page.sidebar === null)
     expect(homes.map(page => page.route).sort()).toEqual(['en/index.md', 'index.md'])
     for (const page of homes) {
       const source = readFileSync(resolve(repositoryRoot, page.source), 'utf8')
       const projected = projectedPageContent(source, page)
-      expect(projected).toContain('layout: false')
-      expect(projected).toContain('http-equiv: refresh')
-      expect(projected).toContain('content: 0; url=./guide/quickstart')
-      expect(projected).not.toContain('# DeepSeek Harness')
+      expect(projected).toContain('layout: home')
+      expect(projected).toContain('name: DeepSeek Harness Desktop')
+      expect(projected).toContain('https://github.com/KevPH2026/deepseek-harness-desktop/releases')
+      expect(projected).toContain('# DeepSeek Harness Desktop')
+      expect(projected).not.toContain('http-equiv: refresh')
     }
   })
 
@@ -456,11 +457,11 @@ describe('projectedPageContent', () => {
     order: 0,
   })
 
-  it('omits the source-only body from locale home pages', () => {
+  it('keeps locale home content and removes repository-only language navigation', () => {
     expect(projectedPageContent(
       '---\nlayout: false\nhead:\n  - - meta\n    - http-equiv: refresh\n      content: 0; url=./guide/quickstart\n---\n\n# Harness\n\n[English](index.md) | 中文\n',
       page(null),
-    )).toBe('---\nlayout: false\nhead:\n  - - meta\n    - http-equiv: refresh\n      content: 0; url=./guide/quickstart\n---\n')
+    )).toBe('---\nlayout: false\nhead:\n  - - meta\n    - http-equiv: refresh\n      content: 0; url=./guide/quickstart\n---\n\n# Harness\n')
   })
 
   it('keeps the full body for ordinary pages', () => {

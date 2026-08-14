@@ -1,0 +1,83 @@
+appId: io.github.kevph2026.deepseek-harness-desktop
+productName: DeepSeek Harness Desktop
+copyright: 'DeepSeek Harness copyright (c) 2026 DeepSeek; unofficial community desktop wrapper by KevPH2026'
+electronVersion: 43.3.0
+
+# electron-builder's non-MAS Electron path forces NSAllowsArbitraryLoads back
+# to true after mac.extendInfo is merged. Restore the intended final value in
+# afterPack, before signing/notarization sees the bundle.
+afterPack: ./scripts/finalize-desktop-info.cjs
+
+publish:
+  - provider: github
+    owner: KevPH2026
+    repo: deepseek-harness-desktop
+    releaseType: release
+
+directories:
+  app: .stage
+  output: release
+
+files:
+  - '**/*'
+
+# Electron Builder prunes conventional README files inside node_modules. Copy
+# the staged legal surface explicitly after the app file matcher runs so the
+# packaged README links and the media package's full language set stay intact.
+extraResources:
+  - from: .stage/LICENSE
+    to: app/LICENSE
+  - from: .stage/THIRD_PARTY_NOTICES.md
+    to: app/THIRD_PARTY_NOTICES.md
+  - from: .stage/README.md
+    to: app/README.md
+  - from: .stage/README.zh.md
+    to: app/README.zh.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-media-generation/README.md
+    to: app/node_modules/@deepseek-ai/dsh-media-generation/README.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-media-generation/README.zh.md
+    to: app/node_modules/@deepseek-ai/dsh-media-generation/README.zh.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-media-generation/README.i18n.yaml
+    to: app/node_modules/@deepseek-ai/dsh-media-generation/README.i18n.yaml
+  - from: .stage/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.md
+    to: app/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.zh.md
+    to: app/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.zh.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.i18n.yaml
+    to: app/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.i18n.yaml
+
+# Harness resolves plugins, workers, native modules, and node-pty helpers from
+# real filesystem paths. The first desktop release keeps its runtime outside
+# ASAR until a separately staged Resources/runtime layout is verified.
+asar: false
+npmRebuild: false
+
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon.icns
+  hardenedRuntime: true
+  # Apple bundle versions remain numeric while package.json and the updater
+  # feed retain the full prerelease SemVer (0.1.0-beta.1).
+  bundleShortVersion: '0.1.0'
+  bundleVersion: '1'
+  extendInfo:
+    NSAppTransportSecurity:
+      NSAllowsArbitraryLoads: false
+      NSAllowsLocalNetworking: true
+  target:
+    - target: dmg
+      arch:
+        - arm64
+    - target: zip
+      arch:
+        - arm64
+
+# The final release process must separately notarize and staple the DMG as the
+# outer container. Stapling mutates its bytes, so do not publish a pre-staple
+# DMG blockmap; the macOS auto-updater uses the ZIP and latest-mac.yml pair.
+dmg:
+  writeUpdateInfo: false
+
+# Keep local filenames identical to the safe URL recorded in latest-mac.yml.
+# Manual GitHub Release uploads do not apply electron-builder's remote rename.
+artifactName: 'DeepSeek-Harness-Desktop-${version}-${arch}.${ext}'

@@ -49,10 +49,39 @@ const repositoryUrl = 'git+https://github.com/deepseek-harness/deepseek-harness.
 const publishedRepositoryUrl = 'git+https://github.com/deepseek-ai/deepseek-harness.git'
 /** Directories whose packages this repository publishes: one release member each. */
 const releaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/[^/]+|vendor\/[^/]+)$/
-
+/**
+ * Community-owned additions that participate in the local workspace and
+ * desktop runtime but must never present themselves as upstream npm release
+ * members. Keep this exact allowlist narrow: every other package/app retains
+ * the repository's ordinary public-release requirements.
+ *
+ * These entries deliberately remain selected by the official dsh release
+ * family. `web-app` has runtime dependencies on the private media and
+ * plugin-marketplace packages, so
+ * filtering only the private package would produce an incomplete upstream
+ * publish set. The independent desktop version makes normal release
+ * verification fail, and the private flags make publish verification fail if
+ * versions are ever aligned — this fork cannot run the official npm release.
+ */
+const communityOnlyDirectories = new Set([
+  'apps/desktop',
+  'packages/host/plugin-marketplace',
+  'packages/media/media-generation',
+])
+/** Verified community repository metadata allowed only after the fork exists. */
+const communityRepositoryByDirectory: Readonly<Record<string, NonNullable<PackageManifest['repository']>>> = {
+  'apps/desktop': {
+    type: 'git',
+    url: 'git+https://github.com/KevPH2026/deepseek-harness-desktop.git',
+    directory: 'apps/desktop',
+  },
+}
 const localArtifactDirs = new Set(['node_modules'])
 const appPackageFiles: Readonly<Record<string, readonly string[]>> = {
   '@deepseek-ai/dsh': ['lib/*.js', 'config'],
+  // Desktop packaging deploys this package as the Electron Builder app root;
+  // only its compiled main process is an npm publication payload.
+  '@deepseek-ai/dsh-desktop': ['lib'],
   // The Web build emits sourcemaps for browser debugging; publishing them is
   // what the payload policy forbids, so the bundle ships without them.
   '@deepseek-ai/dsh-web-frontend': ['dist', '!dist/**/*.map'],
@@ -239,6 +268,23 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
       || manifest.repository.url !== repositoryUrl
       || manifest.repository.directory !== expectedDirectory) {
       errors.push(`${label}: published Landlock package repository must use ${repositoryUrl} with directory ${expectedDirectory} for trusted publishing`)
+    }
+  } else if (communityOnlyDirectories.has(dir)) {
+    if (manifest.private !== true) {
+      errors.push(`${label}: community-only package must set "private": true`)
+    }
+    if (manifest.publishConfig !== undefined) {
+      errors.push(`${label}: community-only package must not set publishConfig`)
+    }
+    const expectedRepository = communityRepositoryByDirectory[dir]
+    if (expectedRepository === undefined && manifest.repository !== undefined) {
+      errors.push(`${label}: community-only package must omit repository until its fork URL is verified`)
+    } else if (expectedRepository !== undefined && (
+      manifest.repository?.type !== expectedRepository.type
+      || manifest.repository?.url !== expectedRepository.url
+      || manifest.repository?.directory !== expectedRepository.directory
+    )) {
+      errors.push(`${label}: community-only package repository must match its verified fork URL and directory`)
     }
   } else if (releaseMemberDirectory.test(dir)) {
     // Release members state that they are publishable: npm refuses a private

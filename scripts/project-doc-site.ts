@@ -15,7 +15,8 @@ import { gfm } from 'micromark-extension-gfm'
 import type { Nodes } from 'mdast'
 import { docsPages, type DocsLocale, type DocsPage } from '../website/docs.ts'
 
-const REPOSITORY_URL = 'https://github.com/deepseek-ai/deepseek-harness'
+const REPOSITORY_SLUG = 'KevPH2026/deepseek-harness-desktop'
+const REPOSITORY_URL = `https://github.com/${REPOSITORY_SLUG}`
 const root = resolve(import.meta.dirname, '..')
 const generatedRoot = resolve(root, 'website/.generated')
 
@@ -209,7 +210,7 @@ function githubTarget(
   image: boolean,
 ): string {
   const path = repoPath(absPath, repoRoot)
-  if (image) return `https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/${repositoryRef}/${path}${suffix}`
+  if (image) return `https://raw.githubusercontent.com/${REPOSITORY_SLUG}/${repositoryRef}/${path}${suffix}`
   const kind = lstatSync(absPath).isDirectory() ? 'tree' : 'blob'
   const lineSuffix = line === undefined ? suffix : `#L${line}`
   return `${REPOSITORY_URL}/${kind}/${repositoryRef}/${path}${lineSuffix}`
@@ -310,10 +311,12 @@ const REPOSITORY_BADGE = /^\[!\[[^\]]*\]\(https:\/\/img\.shields\.io\/[^)]*\)\]\
  */
 function withoutRepositoryChrome(markdown: string): string {
   const lines = markdown.split('\n')
+  const heading = lines.findIndex(line => /^#\s/.test(line))
   const switcher = lines.findIndex(line => LANGUAGE_SWITCHER.test(line))
-  // Only the switcher introducing the page qualifies; further down the same
-  // text is prose or a sample rather than the page's own header.
-  if (switcher !== -1 && switcher < 8) {
+  const introducesPage = heading !== -1
+    && switcher > heading
+    && lines.slice(heading + 1, switcher).every(line => line === '')
+  if (introducesPage) {
     lines.splice(switcher, lines[switcher + 1] === '' ? 2 : 1)
   }
   const badge = lines.findLastIndex(line => REPOSITORY_BADGE.test(line))
@@ -328,7 +331,7 @@ function withoutRepositoryChrome(markdown: string): string {
  *
  * @param markdown Rewritten canonical Markdown content.
  * @param page Publication manifest entry for the content.
- * @returns Full Markdown for ordinary pages or frontmatter-only Markdown for a locale home page.
+ * @returns Full Markdown with repository-only language navigation removed.
  */
 export function projectedPageContent(markdown: string, page: DocsPage): string {
   if (page.sidebar !== null) return withoutRepositoryChrome(markdown)
@@ -340,7 +343,7 @@ export function projectedPageContent(markdown: string, page: DocsPage): string {
   if (closing === -1) {
     throw new Error(`project-doc-site: locale home source ${JSON.stringify(page.source)} has unclosed YAML frontmatter.`)
   }
-  return markdown.slice(0, closing + closingDelimiter.length)
+  return withoutRepositoryChrome(markdown)
 }
 
 /**

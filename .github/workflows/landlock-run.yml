@@ -42,6 +42,7 @@ defaults:
 
 jobs:
   matrix:
+    if: github.repository == 'deepseek-ai/deepseek-harness'
     name: Matrix
     runs-on: ubuntu-24.04
     outputs:
@@ -53,6 +54,7 @@ jobs:
         run: echo "ci=$(node ./scripts/github-matrix.mjs ci)" >> "$GITHUB_OUTPUT"
 
   native:
+    if: github.repository == 'deepseek-ai/deepseek-harness'
     name: ${{ matrix.platform }}
     needs: matrix
     runs-on: ${{ matrix.runner }}
@@ -108,6 +110,7 @@ jobs:
           NALR_REQUIRE_LANDLOCK: 1
 
   darwin:
+    if: github.repository == 'deepseek-ai/deepseek-harness'
     name: darwin (no platform package — degradation proof)
     runs-on: macos-latest
     steps:

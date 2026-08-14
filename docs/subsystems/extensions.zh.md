@@ -256,6 +256,51 @@ Types: [Agent](core.md)
 
 Source: [`packages/extensions/cordis-host-runner/src/index.ts:124`](../../packages/extensions/cordis-host-runner/src/index.ts)
 
+<a id="ctxpluginmarketplace--pluginmarketplacegateway"></a>
+
+### `ctx.pluginMarketplace` — `PluginMarketplaceGateway`
+
+Host Remote plus durable cache and preview-token authority.
+
+```ts cordis-catalog
+/**
+ * Read and filter the cache, refreshing once when stale and policy permits.
+ * @param request - optional server-side query, category, and refresh request.
+ * @returns the bounded catalog view with freshness, cache, and warning metadata.
+ */
+@Remote('catalog') async catalog(request: PluginMarketplaceCatalogRequest): Promise<PluginMarketplaceCatalogSnapshot>
+
+/**
+ * Lazily validate one selected row at its default branch's current commit.
+ * @param request - stable catalog item id selected by the user.
+ * @returns the cached or newly persisted verdict, or an explicit admission failure.
+ */
+@Remote('validateCatalogItem') validateCatalogItem( request: PluginMarketplaceValidateCatalogItemRequest, ): Promise<PluginMarketplaceValidateCatalogItemResult>
+
+/**
+ * Parse and risk-plan an import, minting one short-lived confirmation.
+ * @param request - explicit source whose risks and command will be previewed.
+ * @returns a non-executing preview or a source/admission error.
+ */
+@Remote('prepareImport') async prepareImport(request: PluginMarketplacePrepareImportRequest): Promise<PluginMarketplacePrepareImportResult>
+
+/**
+ * Fail closed: this build intentionally contains no subprocess/install
+ * implementation. A future change needs separate explicit authorization.
+ * @param _request - acknowledged confirmation request that remains non-executable.
+ * @returns the stable `installation-disabled` business result.
+ */
+@Remote('confirmImport') confirmImport(_request: PluginMarketplaceConfirmImportRequest): PluginMarketplaceConfirmImportResult
+
+/**
+ * Return copy-only starter content and official documentation links.
+ * @returns immutable links and starter-template files with no write side effect.
+ */
+@Remote('resources') resources(): PluginMarketplaceResources
+```
+
+Source: [`packages/host/plugin-marketplace/src/index.ts:107`](../../packages/host/plugin-marketplace/src/index.ts)
+
 <a id="cordis-events"></a>
 
 ### `cordis/*` events

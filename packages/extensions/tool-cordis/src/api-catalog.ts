@@ -964,6 +964,43 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'pluginMarketplace',
+    summary: 'Host Remote plus durable cache and preview-token authority.',
+    description: 'Host Remote plus durable cache and preview-token authority.',
+    methods: [
+      {
+        signature: '@Remote(\'catalog\') async catalog(request: PluginMarketplaceCatalogRequest): Promise<PluginMarketplaceCatalogSnapshot>',
+        description: 'Read and filter the cache, refreshing once when stale and policy permits.',
+        parameters: [{ name: 'request', description: 'optional server-side query, category, and refresh request.' }],
+        returns: 'the bounded catalog view with freshness, cache, and warning metadata.',
+      },
+      {
+        signature: '@Remote(\'validateCatalogItem\') validateCatalogItem( request: PluginMarketplaceValidateCatalogItemRequest, ): Promise<PluginMarketplaceValidateCatalogItemResult>',
+        description: 'Lazily validate one selected row at its default branch\'s current commit.',
+        parameters: [{ name: 'request', description: 'stable catalog item id selected by the user.' }],
+        returns: 'the cached or newly persisted verdict, or an explicit admission failure.',
+      },
+      {
+        signature: '@Remote(\'prepareImport\') async prepareImport(request: PluginMarketplacePrepareImportRequest): Promise<PluginMarketplacePrepareImportResult>',
+        description: 'Parse and risk-plan an import, minting one short-lived confirmation.',
+        parameters: [{ name: 'request', description: 'explicit source whose risks and command will be previewed.' }],
+        returns: 'a non-executing preview or a source/admission error.',
+      },
+      {
+        signature: '@Remote(\'confirmImport\') confirmImport(_request: PluginMarketplaceConfirmImportRequest): PluginMarketplaceConfirmImportResult',
+        description: 'Fail closed: this build intentionally contains no subprocess/install implementation. A future change needs separate explicit authorization.',
+        parameters: [{ name: '_request', description: 'acknowledged confirmation request that remains non-executable.' }],
+        returns: 'the stable `installation-disabled` business result.',
+      },
+      {
+        signature: '@Remote(\'resources\') resources(): PluginMarketplaceResources',
+        description: 'Return copy-only starter content and official documentation links.',
+        parameters: [],
+        returns: 'immutable links and starter-template files with no write side effect.',
+      },
+    ],
+  },
+  {
     key: 'sandbox',
     summary: 'Abstract process-sandbox service.',
     description: 'Abstract process-sandbox service. confine must return enforcing argv or fail closed at wrap or runner-execution time; silent unconfined passthrough is forbidden. Functional probes arbitrate multi-runner chains and may be skipped for a sole candidate, whose own refusal remains the fail-closed end.',
@@ -2654,10 +2691,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ApprovalOutcome = \'allowed-once\' | \'rejected\' | \'cancelled\' | \'unavailable\';',
   },
   {
-    name: 'ApprovalPolicy',
-    declaration: 'export type ApprovalPolicy = \'ask\' | \'never\';',
-  },
-  {
     name: 'ApprovalRequest',
     declaration: 'export interface ApprovalRequest {\n    readonly agent: Agent;\n    readonly toolName: string;\n    readonly callId?: CallId;\n    readonly reason?: string;\n    readonly signal?: AbortSignal;\n}',
   },
@@ -3476,6 +3509,142 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'PermissionSelect',
     declaration: 'export interface PermissionSelect {\n    options: PresetOption[];\n    currentValue: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceCatalogItem',
+    declaration: 'export interface PluginMarketplaceCatalogItem {\n    readonly id: string;\n    readonly name: string;\n    readonly description?: string;\n    readonly category: PluginMarketplaceCategory;\n    readonly categorySource: PluginMarketplaceCategorySource;\n    readonly sourceKind: \'github\';\n    readonly sourceRef: string;\n    readonly sourceUrl: string;\n    readonly defaultBranch: string;\n    readonly updatedAt: string;\n    readonly stars: number;\n    readonly license?: string;\n    readonly discoveredFrom: PluginMarketplaceDiscoverySource;\n    readonly verifiedSource?: PluginMarketplaceVerifiedSource;\n    readonly quickConfig?: PluginMarketplaceQuickConfig;\n    readonly partnerOffers: readonly PluginMarketplacePartnerOffer[];\n    readonly installability: PluginMarketplaceInstallability;\n    readonly validation?: PluginMarketplaceValidation;\n    readonly validationFailure?: PluginMarketplaceValidationFailure;\n}',
+  },
+  {
+    name: 'PluginMarketplaceCatalogRequest',
+    declaration: 'export interface PluginMarketplaceCatalogRequest {\n    readonly query?: string;\n    readonly category?: PluginMarketplaceCategory;\n    readonly refresh?: boolean;\n}',
+  },
+  {
+    name: 'PluginMarketplaceCatalogSnapshot',
+    declaration: 'export interface PluginMarketplaceCatalogSnapshot {\n    readonly status: \'fresh\' | \'stale\' | \'empty\';\n    readonly items: readonly PluginMarketplaceCatalogItem[];\n    readonly publicOffers: readonly PluginMarketplacePublicOffer[];\n    readonly fetchedAt?: number;\n    readonly checkedAt?: number;\n    readonly fromCache: boolean;\n    readonly nextRefreshAt: number;\n    readonly warning?: PluginMarketplaceCatalogWarning;\n}',
+  },
+  {
+    name: 'PluginMarketplaceCatalogWarning',
+    declaration: 'export type PluginMarketplaceCatalogWarning = \'offline-cache\' | \'offline-no-cache\' | \'rate-limited\' | \'github-response-invalid\';',
+  },
+  {
+    name: 'PluginMarketplaceCategory',
+    declaration: 'export type PluginMarketplaceCategory = \'design\' | \'coding\' | \'writing\' | \'model-provider\' | \'gateway\' | \'other\';',
+  },
+  {
+    name: 'PluginMarketplaceCategorySource',
+    declaration: 'export type PluginMarketplaceCategorySource = \'verified-catalog\' | \'topic-heuristic\';',
+  },
+  {
+    name: 'PluginMarketplaceCommandPreview',
+    declaration: 'export interface PluginMarketplaceCommandPreview {\n    readonly program: \'dsh\';\n    readonly args: readonly string[];\n}',
+  },
+  {
+    name: 'PluginMarketplaceConfirmationId',
+    declaration: 'export type PluginMarketplaceConfirmationId = Branded<\'PluginMarketplaceConfirmationId\'>;',
+  },
+  {
+    name: 'PluginMarketplaceConfirmImportError',
+    declaration: 'export interface PluginMarketplaceConfirmImportError {\n    readonly code: PluginMarketplaceConfirmImportErrorCode;\n    readonly message: string;\n    readonly exitCode?: number | null;\n    readonly stdoutTail?: string;\n    readonly stderrTail?: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceConfirmImportErrorCode',
+    declaration: 'export type PluginMarketplaceConfirmImportErrorCode = \'confirmation-not-found\' | \'confirmation-expired\' | \'confirmation-consumed\' | \'install-busy\' | \'installation-disabled\' | \'command-unavailable\' | \'install-failed\';',
+  },
+  {
+    name: 'PluginMarketplaceConfirmImportRequest',
+    declaration: 'export interface PluginMarketplaceConfirmImportRequest {\n    readonly confirmationId: PluginMarketplaceConfirmationId;\n    readonly acknowledgeRisks: true;\n}',
+  },
+  {
+    name: 'PluginMarketplaceConfirmImportResult',
+    declaration: 'export type PluginMarketplaceConfirmImportResult = {\n    readonly ok: true;\n    readonly value: PluginMarketplaceImportReceipt;\n} | {\n    readonly ok: false;\n    readonly error: PluginMarketplaceConfirmImportError;\n};',
+  },
+  {
+    name: 'PluginMarketplaceDiscoverySource',
+    declaration: 'export interface PluginMarketplaceDiscoverySource {\n    readonly kind: \'github-topic\';\n    readonly source: string;\n    readonly lastVerified: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceImportPreview',
+    declaration: 'export interface PluginMarketplaceImportPreview {\n    readonly confirmationId: PluginMarketplaceConfirmationId;\n    readonly expiresAt: number;\n    readonly profile: \'web\';\n    readonly sourceKind: \'github\' | \'npm\' | \'local\';\n    readonly sourceRef: string;\n    readonly verification: \'catalog-verified\' | \'topic-only\' | \'custom\';\n    readonly command: PluginMarketplaceCommandPreview;\n    readonly risks: readonly PluginMarketplaceImportRisk[];\n}',
+  },
+  {
+    name: 'PluginMarketplaceImportReceipt',
+    declaration: 'export interface PluginMarketplaceImportReceipt {\n    readonly status: \'installed\';\n    readonly profile: \'web\';\n    readonly sourceRef: string;\n    readonly restartRequired: true;\n    readonly stdoutTail: string;\n    readonly stderrTail: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceImportRisk',
+    declaration: 'export type PluginMarketplaceImportRisk = \'third-party-code\' | \'install-scripts\' | \'network-access\' | \'unpinned-source\' | \'unverified-source\' | \'local-filesystem-access\' | \'profile-restart-required\';',
+  },
+  {
+    name: 'PluginMarketplaceImportSource',
+    declaration: 'export type PluginMarketplaceImportSource = {\n    readonly kind: \'catalog\';\n    readonly itemId: string;\n} | {\n    readonly kind: \'github\';\n    readonly repository: string;\n    readonly ref?: string;\n} | {\n    readonly kind: \'npm\';\n    readonly spec: string;\n} | {\n    readonly kind: \'local\';\n    readonly path: string;\n};',
+  },
+  {
+    name: 'PluginMarketplaceInstallability',
+    declaration: 'export type PluginMarketplaceInstallability = \'unknown\' | \'validated\' | \'invalid\';',
+  },
+  {
+    name: 'PluginMarketplacePartnerOffer',
+    declaration: 'export interface PluginMarketplacePartnerOffer {\n    readonly kind: \'sponsor\' | \'free-credit\';\n    readonly label: string;\n    readonly url: string;\n    readonly terms: string;\n    readonly eligibility: string;\n    readonly source: string;\n    readonly lastVerified: string;\n}',
+  },
+  {
+    name: 'PluginMarketplacePrepareImportError',
+    declaration: 'export interface PluginMarketplacePrepareImportError {\n    readonly code: PluginMarketplacePrepareImportErrorCode;\n    readonly message: string;\n}',
+  },
+  {
+    name: 'PluginMarketplacePrepareImportErrorCode',
+    declaration: 'export type PluginMarketplacePrepareImportErrorCode = \'invalid-source\' | \'catalog-item-not-found\' | \'catalog-item-unvalidated\' | \'catalog-item-invalid\' | \'local-path-unreadable\' | \'local-manifest-missing\' | \'confirmation-capacity\';',
+  },
+  {
+    name: 'PluginMarketplacePrepareImportRequest',
+    declaration: 'export interface PluginMarketplacePrepareImportRequest {\n    readonly source: PluginMarketplaceImportSource;\n}',
+  },
+  {
+    name: 'PluginMarketplacePrepareImportResult',
+    declaration: 'export type PluginMarketplacePrepareImportResult = {\n    readonly ok: true;\n    readonly value: PluginMarketplaceImportPreview;\n} | {\n    readonly ok: false;\n    readonly error: PluginMarketplacePrepareImportError;\n};',
+  },
+  {
+    name: 'PluginMarketplacePublicOffer',
+    declaration: 'export interface PluginMarketplacePublicOffer {\n    readonly id: string;\n    readonly kind: \'public-offer\';\n    readonly provider: string;\n    readonly title: string;\n    readonly summary: string;\n    readonly terms: string;\n    readonly eligibility: string;\n    readonly source: string;\n    readonly secondarySources?: readonly string[];\n    readonly applyUrl: string;\n    readonly lastVerified: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceQuickConfig',
+    declaration: 'export interface PluginMarketplaceQuickConfig {\n    readonly settingsNamespace: string;\n    readonly source: string;\n    readonly lastVerified: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceResources',
+    declaration: 'export interface PluginMarketplaceResources {\n    readonly topicUrl: string;\n    readonly docsUrl: string;\n    readonly publishGuideUrl: string;\n    readonly template: {\n        readonly files: readonly PluginMarketplaceTemplateFile[];\n    };\n}',
+  },
+  {
+    name: 'PluginMarketplaceTemplateFile',
+    declaration: 'export interface PluginMarketplaceTemplateFile {\n    readonly path: string;\n    readonly content: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceValidateCatalogItemError',
+    declaration: 'export interface PluginMarketplaceValidateCatalogItemError {\n    readonly code: PluginMarketplaceValidateCatalogItemErrorCode;\n    readonly message: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceValidateCatalogItemErrorCode',
+    declaration: 'export type PluginMarketplaceValidateCatalogItemErrorCode = \'catalog-item-not-found\' | \'validation-busy\' | \'validation-rate-limited\' | \'validation-unavailable\';',
+  },
+  {
+    name: 'PluginMarketplaceValidateCatalogItemRequest',
+    declaration: 'export interface PluginMarketplaceValidateCatalogItemRequest {\n    readonly itemId: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceValidateCatalogItemResult',
+    declaration: 'export type PluginMarketplaceValidateCatalogItemResult = {\n    readonly ok: true;\n    readonly value: PluginMarketplaceCatalogItem;\n} | {\n    readonly ok: false;\n    readonly error: PluginMarketplaceValidateCatalogItemError;\n};',
+  },
+  {
+    name: 'PluginMarketplaceValidation',
+    declaration: 'export interface PluginMarketplaceValidation {\n    readonly source: string;\n    readonly commitSha: string;\n    readonly lastVerified: string;\n    readonly packageName?: string;\n    readonly patchPath?: string;\n}',
+  },
+  {
+    name: 'PluginMarketplaceValidationFailure',
+    declaration: 'export type PluginMarketplaceValidationFailure = \'manifest-missing\' | \'manifest-invalid\' | \'bundle-missing\' | \'patch-path-invalid\' | \'patch-missing\';',
+  },
+  {
+    name: 'PluginMarketplaceVerifiedSource',
+    declaration: 'export interface PluginMarketplaceVerifiedSource {\n    readonly catalogId: string;\n    readonly source: string;\n    readonly lastVerified: string;\n}',
   },
   {
     name: 'PostToolDecision',

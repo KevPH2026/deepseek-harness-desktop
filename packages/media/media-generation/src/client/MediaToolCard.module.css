@@ -1,0 +1,292 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 2px 0 6px 4px;
+  max-width: 620px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.header {
+  display: flex;
+  min-width: 0;
+  height: 28px;
+  align-items: center;
+  gap: 7px;
+}
+
+.icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.card[data-kind='video'] .icon {
+  color: var(--dsw-alias-brand-text);
+}
+
+.title,
+.prompt,
+.state {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.title {
+  flex: none;
+  font-weight: 500;
+}
+
+.separator {
+  flex: none;
+  width: 2px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--dsw-alias-label-caption);
+}
+
+.prompt {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.state {
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+}
+
+.card[data-state='error'] .state {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.card[data-state='stopped'] .state {
+  color: var(--dsw-alias-state-warn-label);
+}
+
+.pending,
+.artifact,
+.failure,
+.missing {
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: 13px;
+  background: var(--dsw-alias-bg-module-platform);
+}
+
+.pending {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.pendingCanvas {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  height: 54px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--dsw-alias-bg-skeleton);
+  color: var(--dsw-alias-label-caption);
+}
+
+.pendingCanvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 70%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 55%, transparent),
+    transparent
+  );
+  animation: media-pending-sweep 1.8s ease-in-out infinite;
+}
+
+.pendingGlyph {
+  font-size: 15px;
+  line-height: 1;
+}
+
+@keyframes media-pending-sweep {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(220%); }
+}
+
+.artifact {
+  display: flex;
+  flex-direction: column;
+}
+
+.mediaFrame {
+  display: grid;
+  min-height: 180px;
+  max-height: 440px;
+  place-items: center;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-base);
+}
+
+.mediaFrame[data-kind='video'] {
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+}
+
+.image,
+.video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 440px;
+  object-fit: contain;
+}
+
+.video {
+  aspect-ratio: 16 / 9;
+  background: var(--dsw-alias-bg-base);
+}
+
+.artifactFooter {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 10px 12px 11px;
+  border-top: 1px solid var(--dsw-alias-border-l2);
+}
+
+.meta {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.meta div {
+  display: inline-flex;
+  min-width: 0;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.meta dt {
+  color: var(--dsw-alias-label-caption);
+}
+
+.meta dd {
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+}
+
+.actionButton,
+.download {
+  box-sizing: border-box;
+  display: inline-flex;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.actionButton:hover,
+.download:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+.actionButton:focus-visible,
+.download:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--dsw-alias-border-l3);
+}
+
+.failure,
+.missing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 14px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.failure strong {
+  color: var(--dsw-alias-state-error-primary);
+  font-weight: 500;
+}
+
+.card[data-state='stopped'] .failure strong {
+  color: var(--dsw-alias-state-warn-label);
+}
+
+.missing strong {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.failure pre,
+.missing pre {
+  width: 100%;
+  max-height: 150px;
+  overflow: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: inherit;
+  font: var(--dsw-font-markdown-code-block-small);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pendingCanvas::after {
+    animation: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .artifactFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions {
+    align-self: flex-end;
+  }
+}

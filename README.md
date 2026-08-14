@@ -1,57 +1,121 @@
-# DeepSeek Harness
+<p align="center">
+  <img src="apps/web/public/favicon.svg" width="104" alt="DeepSeek Harness icon">
+</p>
+
+# DeepSeek Harness Desktop
 
 English | [中文](README.zh.md)
 
-DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
+<p align="center"><strong>A desktop agent workspace that can reason, code, use tools, generate media, and grow through community plugins.</strong></p>
 
-It uses an architecture where **everything is a plugin**, and is powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper).
+<p align="center">
+  <a href="https://github.com/KevPH2026/deepseek-harness-desktop/releases"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/KevPH2026/deepseek-harness-desktop?include_prereleases&style=flat-square"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-111827?style=flat-square"></a>
+  <a href="https://github.com/KevPH2026/deepseek-harness-desktop/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/KevPH2026/deepseek-harness-desktop?style=flat-square"></a>
+  <img alt="macOS Apple Silicon" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111827?style=flat-square&logo=apple">
+</p>
 
-## Developer preview
+![DeepSeek Harness Desktop showing the source-aware community plugin marketplace](docs/user/deepseek-harness-desktop-plugin-marketplace.zh.png)
 
-DeepSeek Harness is currently in _developer preview_ and is iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
+> [!IMPORTANT]
+>
+> DeepSeek Harness Desktop is an **unofficial community edition** maintained by [@KevPH2026](https://github.com/KevPH2026). It is based on the open-source [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) project and is not an official DeepSeek desktop product or endorsement.
 
-## Run
+## One workspace, more ways to finish the job
 
-### Run from `npm`
+DeepSeek Harness already provides a capable plugin-based agent harness. This community edition brings it into a supervised macOS desktop app and adds the product surfaces that make it easier to use every day: configurable image and video generation, a source-aware community plugin catalog with on-demand manifest validation, release-aware updates, version notes, and a direct feedback path.
 
-Install `Node.js`, then run:
+| What you can do | How the desktop edition helps |
+|---|---|
+| Build and change software | Give the agent a workspace, let it inspect files, run tools, plan changes, and keep sessions together. |
+| Create visual deliverables | Configure image and video providers once; the agent can request the right media tool when the deliverable genuinely needs it. |
+| Extend for your workflow | Discover community plugins by scenario, inspect trust signals, and validate one selected repository at a time; installation remains disabled in the source beta. |
+| Connect your model stack | Use DeepSeek and supported compatible providers or gateways without coupling the desktop shell to one inference backend. |
+| Stay current | Read release notes in the app, check signed GitHub Releases, and choose when to download and install an update. |
 
-```sh
-npx @deepseek-ai/dsh web
-```
+## Highlights
 
-The command starts the Web UI, served at `http://127.0.0.1:3080` by default. See [Web UI guide](docs/user/guide/index.md).
+### Native desktop workflow
+
+- A focused Electron shell around the complete Harness Web workspace.
+- One supervised Harness process on a random `127.0.0.1` port, with bounded process-tree shutdown on Quit.
+- Hardened renderer defaults: Node integration off, context isolation on, Chromium sandbox on, and navigation locked to the active local origin.
+- Desktop-owned data directory, application logs, native menus, About information, release notes, update checks, and feedback links.
+
+### Smart image and video generation
+
+- `generate_image` through an OpenAI Images-compatible provider, with `gpt-image-2` as the initial model default.
+- `generate_video` through a Google Veo-compatible provider, with `veo-3.1-generate-preview` as the initial model default.
+- Media tools are disabled until configured and use approval-before-spend by default.
+- The agent chooses media tools only when they improve the requested deliverable; ordinary coding and writing tasks stay text-first.
+- Generated artifacts render as first-class result cards and remain available in the session.
+
+### Community plugin marketplace
+
+- Discovers repositories from the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic and only labels a selected item compatible after its pinned manifest and patch target validate; compatibility does not enable installation.
+- Organizes plugins for design, programming, writing, model providers, gateways, and other workflows.
+- Accepts GitHub, npm, or local-path source drafts and shows the risks those sources would carry; the beta does not execute imports. A guided create-and-publish path is available.
+- Shows source, license, revision, freshness, validation, and risk information while installation remains disabled. Topic membership alone is never treated as proof of compatibility or trust.
+
+### Provider offers, without fake sponsorship claims
+
+- A provider area can list public free tiers or trial offers only when eligibility, terms, source URL, and verification date are present.
+- Community partners and ordinary provider offers are labeled separately.
+- No provider is presented as a sponsor or partner without an actual verified relationship.
+
+## Get started
+
+### Install a signed release
+
+Signed and notarized Apple Silicon builds will appear on the [Releases page](https://github.com/KevPH2026/deepseek-harness-desktop/releases). The app checks that release channel, never arbitrary repository commits, and asks before downloading or installing an update.
 
 ### Run from source
 
-To run from a repository checkout:
+Prerequisites: macOS on Apple Silicon, Node.js `^22.19.0 || >=24.0.0`, pnpm, and a model provider API key.
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
+git clone https://github.com/KevPH2026/deepseek-harness-desktop.git
+cd deepseek-harness-desktop
 pnpm install
-pnpm run build
-pnpm dsh web
+npm run desktop:dev
 ```
 
-## Community and support
+Create a local unsigned verification build:
 
-- Feel free to submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
-- Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
-- Join <a href="https://discord.gg/Ycq5dCaS4">DeepSeek Harness Discord community</a>.
+```sh
+npm run desktop:pack:mac
+```
 
-## Contributing
+See the [desktop build and security guide](apps/desktop/README.md) before distributing an app bundle.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+## Trust and cost boundaries
 
-## Development
+- **Plugins execute code.** When installation is enabled in a future build, installing a Git source may run a package build outside the agent sandbox. Review the source, pin a commit, and approve build scripts only for code you trust. The current source beta keeps marketplace installation disabled.
+- **Loopback is local, not secret.** The first desktop transport trusts other native processes running as the same logged-in user. Do not combine a sensitive session with untrusted local software.
+- **Media calls may cost money.** The default approval policy asks before generation. Provider prices, eligibility, and rate limits remain the provider's responsibility.
+- **Only signed releases auto-update.** Local unsigned builds can check for updates but fail safely instead of bypassing macOS trust protections.
 
-Start with the [development guide](docs/development.md) and [architecture documentation](docs/architecture.md).
+## Product documentation
 
-For agents, follow [AGENTS.md](AGENTS.md).
+- [Product introduction and documentation site](docs/user/index.md)
+- [Web workspace quickstart](docs/user/guide/index.md)
+- [Model provider configuration](docs/user/guide/providers.md)
+- [Plugin development and publishing](docs/user/develop/basic/publish.md)
+- [Desktop build, lifecycle, and security](apps/desktop/README.md)
 
-## License
+## Feedback and community
 
-[MIT](LICENSE)
+- Found a bug or have a feature request? [Open a feedback issue](https://github.com/KevPH2026/deepseek-harness-desktop/issues/new/choose).
+- Building a Harness plugin? Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic and follow the [plugin publishing guide](docs/user/develop/basic/publish.md).
+- Want to list a provider offer or discuss a real partnership? Use the dedicated provider application template after the repository launches.
+- Upstream Harness questions and contributions belong in the [DeepSeek Harness repository](https://github.com/deepseek-ai/deepseek-harness).
 
-Third-party dependencies and their licenses are disclosed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+## Project status
+
+The desktop edition is in beta and the upstream Harness remains in developer preview. Compatibility-breaking changes are possible. The initial packaged target is macOS on Apple Silicon; other platforms need separate packaging and runtime verification before they are advertised as supported.
+
+## Attribution and license
+
+DeepSeek Harness retains its original `Copyright (c) 2026 DeepSeek` notice. The desktop wrapper and community additions are maintained by [@KevPH2026](https://github.com/KevPH2026) under the upstream [MIT License](LICENSE). Bundled dependency licenses are listed in [Third-Party Notices](THIRD_PARTY_NOTICES.md).
+
+If this project helps you turn more agent runs into finished work, **star the repository**, share what you build, and help shape the community plugin ecosystem.

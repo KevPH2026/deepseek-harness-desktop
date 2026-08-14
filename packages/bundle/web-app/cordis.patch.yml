@@ -94,6 +94,11 @@
     - id: plugin-inventory
       name: '@deepseek-ai/dsh-host-plugin-inventory'
 
+    # Remote discovery/cache and fail-closed import planning. Topic hits stay
+    # unverified until a selected row passes pinned bundle validation.
+    - id: plugin-marketplace
+      name: '@deepseek-ai/dsh-host-plugin-marketplace'
+
     # The API gateway: the transport-agnostic dispatch face every client shape
     # shares. The base layer's agent-default-model service owns the default model.
     - id: api-gateway
@@ -170,6 +175,11 @@
 
     - id: cordis-client-runner
       name: '@deepseek-ai/dsh-cordis-client-runner'
+
+    # Dual-face media generation: the Host half registers tools, settings and
+    # provider routes; the browser half mounts the generation workspace.
+    - id: media-generation
+      name: '@deepseek-ai/dsh-media-generation'
 
     - id: ui-theme
       name: '@deepseek-ai/dsh-client-ui-theme'

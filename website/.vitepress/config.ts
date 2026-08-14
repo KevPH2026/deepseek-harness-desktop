@@ -147,14 +147,14 @@ const sharedTheme: Pick<DefaultTheme.Config, 'search' | 'socialLinks' | 'editLin
     },
   },
   socialLinks: [
-    { icon: 'github', link: 'https://github.com/deepseek-ai/deepseek-harness' },
+    { icon: 'github', link: 'https://github.com/KevPH2026/deepseek-harness-desktop' },
   ],
   editLink: {
     pattern: ({ frontmatter }: PageData) => {
       const data: unknown = frontmatter
       const editSource: unknown = typeof data === 'object' && data !== null ? Reflect.get(data, 'editSource') : undefined
       if (typeof editSource !== 'string') throw new Error('Projected documentation page has no editSource frontmatter.')
-      return `https://github.com/deepseek-ai/deepseek-harness/edit/master/${editSource}`
+      return `https://github.com/KevPH2026/deepseek-harness-desktop/edit/master/${editSource}`
     },
     text: '在 GitHub 上编辑此页',
   },
@@ -185,6 +185,7 @@ const wordmark = readFileSync(resolve(import.meta.dirname, '../public/wordmark.s
 const siteStyle = `
 .dsh-lockup { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .dsh-wordmark { display: block; height: 22px; width: auto; color: var(--vp-c-text-1); }
+.dsh-product { color: var(--vp-c-text-1); font-size: 14px; font-weight: 650; white-space: nowrap; }
 .dsh-tag {
   display: inline-flex;
   align-items: center;
@@ -243,12 +244,12 @@ const scrollbarScript = `
  * @returns Markup placed beside the navigation-bar home link.
  */
 function siteTitle(previewTag: string): string {
-  return `<span class="dsh-lockup">${wordmark}<span class="dsh-tag">${previewTag}</span></span>`
+  return `<span class="dsh-lockup">${wordmark}<span class="dsh-product">Desktop</span><span class="dsh-tag">${previewTag}</span></span>`
 }
 
 export default withMermaid({
-  title: 'DeepSeek Harness',
-  description: '用于构建 Agent Harness 的插件化 SDK',
+  title: 'DeepSeek Harness Desktop',
+  description: '面向编程、工具、智能媒体生成与社区插件的桌面 agent 工作区',
   base,
   head: [
     // VitePress leaves head hrefs untouched, so the base belongs here explicitly.
@@ -269,6 +270,8 @@ export default withMermaid({
         nav: [
           { text: '入门', link: landingLink('root', guideModules.root.guide), activeMatch: '^/guide/' },
           ...moduleNav('root'),
+          { text: '版本', link: 'https://github.com/KevPH2026/deepseek-harness-desktop/releases' },
+          { text: '反馈', link: 'https://github.com/KevPH2026/deepseek-harness-desktop/issues/new/choose' },
         ],
         sidebar: {
           '/guide/': guideSidebar('root'),
@@ -295,6 +298,8 @@ export default withMermaid({
         nav: [
           { text: 'Guide', link: landingLink('en', guideModules.en.guide), activeMatch: '^/en/guide/' },
           ...moduleNav('en'),
+          { text: 'Releases', link: 'https://github.com/KevPH2026/deepseek-harness-desktop/releases' },
+          { text: 'Feedback', link: 'https://github.com/KevPH2026/deepseek-harness-desktop/issues/new/choose' },
         ],
         sidebar: {
           '/en/guide/': guideSidebar('en'),
@@ -306,7 +311,7 @@ export default withMermaid({
             const data: unknown = frontmatter
             const editSource: unknown = typeof data === 'object' && data !== null ? Reflect.get(data, 'editSource') : undefined
             if (typeof editSource !== 'string') throw new Error('Projected documentation page has no editSource frontmatter.')
-            return `https://github.com/deepseek-ai/deepseek-harness/edit/master/${editSource}`
+            return `https://github.com/KevPH2026/deepseek-harness-desktop/edit/master/${editSource}`
           },
           text: 'Edit this page on GitHub',
         },

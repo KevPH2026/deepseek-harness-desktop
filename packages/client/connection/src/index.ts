@@ -20,6 +20,7 @@ export type {
   HostConnectionRpc,
 } from './rpc.ts'
 export { HostConnectionService } from './rpc-host.ts'
+export { isTrustedApiRequest } from './api-request-trust.ts'
 
 export { API_PATH, HOST_EVENTS_PATH, MUX_EVENTS_PATH } from './api-path.ts'
 
@@ -116,6 +117,14 @@ const PRIVILEGED_METHODS = new Set([
   'credentials.set',
   'credentials.unset',
   'llm.discoverModels',
+  // Discovery reads Host-fetched/cached remote metadata, validation makes
+  // bounded Host network requests, and import planning names local paths or a
+  // future profile mutation. Keep the entire plane loopback same-origin.
+  'pluginMarketplace.catalog',
+  'pluginMarketplace.validateCatalogItem',
+  'pluginMarketplace.prepareImport',
+  'pluginMarketplace.confirmImport',
+  'pluginMarketplace.resources',
 ])
 
 /**

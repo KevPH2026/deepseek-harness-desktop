@@ -1,0 +1,195 @@
+name: Release (Desktop)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing vSemVer tag to release (for example v0.1.0-beta.1)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  PRIMARY_NODE_VERSION: '24'
+  DSH_TELEMETRY_DISABLED: '1'
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  release:
+    name: Sign, notarize, verify, and publish macOS arm64
+    runs-on: macos-15
+    environment: desktop-release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          dest: ${{ runner.temp }}/setup-pnpm
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          cache: pnpm
+
+      - name: Require Apple release credentials
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required desktop-release secret: $name" >&2
+              exit 1
+            fi
+          done
+
+      - name: Verify tag and native runner
+        run: |
+          expected="v$(node -p "require('./apps/desktop/package.json').version")"
+          if [ "$RELEASE_TAG" != "$expected" ]; then
+            echo "Release tag $RELEASE_TAG does not match desktop package version $expected" >&2
+            exit 1
+          fi
+          if ! git rev-parse --verify --quiet "$RELEASE_TAG^{commit}" >/dev/null; then
+            echo "Release tag does not exist: $RELEASE_TAG" >&2
+            exit 1
+          fi
+          if [ "$(uname -m)" != "arm64" ]; then
+            echo "Desktop release must run natively on an Apple Silicon runner" >&2
+            exit 1
+          fi
+
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify release quality gates
+        run: |
+          pnpm run constraints
+          pnpm run verify-third-party-notices
+          pnpm run verify-package-invariants
+          pnpm run verify-cordis-config
+          pnpm run desktop:verify-runtime
+          npm run build
+          npm run build:desktop
+          npm run desktop:verify-built-main
+          pnpm exec vitest run \
+            apps/desktop/tests \
+            packages/media/media-generation/tests \
+            packages/host/plugin-marketplace/tests \
+            packages/client/ui-settings-plugin-inventory/tests
+
+      - name: Build signed and notarized distribution
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run desktop:dist:mac
+
+      - name: Verify distributable and update feed
+        run: |
+          app_path="$(find apps/desktop/release -type d -name 'DeepSeek Harness Desktop.app' -print -quit)"
+          dmg_path="$(find apps/desktop/release -maxdepth 1 -type f -name '*.dmg' -print -quit)"
+          zip_path="$(find apps/desktop/release -maxdepth 1 -type f -name '*.zip' -print -quit)"
+          feed_path="apps/desktop/release/latest-mac.yml"
+          plist="$app_path/Contents/Info.plist"
+
+          for path in "$app_path" "$dmg_path" "$zip_path" "$feed_path"; do
+            if [ -z "$path" ] || [ ! -e "$path" ]; then
+              echo "Missing required desktop artifact: $path" >&2
+              exit 1
+            fi
+          done
+          if ! find apps/desktop/release -maxdepth 1 -type f -name '*.blockmap' -print -quit | grep -q .; then
+            echo "Missing updater blockmap" >&2
+            exit 1
+          fi
+
+          codesign --verify --deep --strict --verbose=4 "$app_path"
+          signature="$(codesign -d --verbose=4 "$app_path" 2>&1)"
+          printf '%s\n' "$signature"
+          printf '%s\n' "$signature" | grep -q '^Authority=Developer ID Application:'
+          printf '%s\n' "$signature" | grep -Eq '^TeamIdentifier=[A-Z0-9]+$'
+          if printf '%s\n' "$signature" | grep -Eq 'Signature=adhoc|TeamIdentifier=not set'; then
+            echo "Desktop application is not Developer ID signed" >&2
+            exit 1
+          fi
+          spctl --assess --type execute --verbose=4 "$app_path"
+          xcrun stapler validate "$app_path"
+
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSAppTransportSecurity:NSAllowsArbitraryLoads' "$plist")" = false
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSAppTransportSecurity:NSAllowsLocalNetworking' "$plist")" = true
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSAppTransportSecurity:NSExceptionDomains:localhost:NSTemporaryExceptionAllowsInsecureHTTPLoads' "$plist")" = true
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSAppTransportSecurity:NSExceptionDomains:127.0.0.1:NSTemporaryExceptionAllowsInsecureHTTPLoads' "$plist")" = true
+
+          version="$(node -p "require('./apps/desktop/package.json').version")"
+          version_core="${version%%-*}"
+          version_core="${version_core%%+*}"
+          bundle_short="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")"
+          bundle_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")"
+          test "$bundle_short" = "$version_core"
+          node -e 'const [s,b]=process.argv.slice(1);const c="(?:0|[1-9]\\d*)";if(!(new RegExp(`^${c}(?:\\.${c}){2}$`)).test(s)||!(new RegExp(`^${c}(?:\\.${c}){0,2}$`)).test(b))process.exit(1)' "$bundle_short" "$bundle_build"
+          packaged_manifest="$app_path/Contents/Resources/app/package.json"
+          packaged_version="$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version)" "$packaged_manifest")"
+          test "$packaged_version" = "$version"
+
+          icon_file="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' "$plist")"
+          if [ "$icon_file" = electron.icns ] || [ -z "$icon_file" ]; then
+            echo "Packaged app still uses Electron's default icon" >&2
+            exit 1
+          fi
+          case "$icon_file" in
+            *.icns) ;;
+            *) icon_file="$icon_file.icns" ;;
+          esac
+          test -f "$app_path/Contents/Resources/$icon_file"
+
+          update_config="$app_path/Contents/Resources/app-update.yml"
+          test -f "$update_config"
+          grep -Eq '^owner:[[:space:]]*KevPH2026$' "$update_config"
+          grep -Eq '^repo:[[:space:]]*deepseek-harness-desktop$' "$update_config"
+
+          grep -Eq "^version:[[:space:]]*['\"]?$version['\"]?$" "$feed_path"
+          grep -Eq '\.zip([[:space:]]|$)' "$feed_path"
+          grep -Eq 'sha512:' "$feed_path"
+          feed_zip="$(node -e "const s=require('fs').readFileSync(process.argv[1],'utf8');const m=s.match(/^\\s*-\\s+url:\\s*['\"]?([^'\"\\n]+\\.zip)['\"]?\\s*$/m);if(!m)process.exit(1);process.stdout.write(m[1])" "$feed_path")"
+          if [ "$feed_zip" != "$(basename "$zip_path")" ]; then
+            echo "Update feed ZIP ($feed_zip) does not match uploaded ZIP ($(basename "$zip_path"))" >&2
+            exit 1
+          fi
+
+      - name: Create verified GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(node -p "require('./apps/desktop/package.json').version")"
+          release_kind=--latest
+          case "$version" in
+            *-*) release_kind=--prerelease ;;
+          esac
+          gh release create "$RELEASE_TAG" \
+            apps/desktop/release/*.dmg \
+            apps/desktop/release/*.zip \
+            apps/desktop/release/*.blockmap \
+            apps/desktop/release/latest-mac.yml \
+            --verify-tag \
+            --title "DeepSeek Harness Desktop $version" \
+            --notes-file apps/desktop/CHANGELOG.md \
+            "$release_kind"

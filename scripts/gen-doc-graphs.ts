@@ -563,6 +563,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     consumers: ['tool-cordis'],
     note: 'Registers host inspect providers, mirrors the client provider manifest, and routes client queries through the dynamic Cordis transport.',
   },
+  {
+    key: 'pluginMarketplace',
+    pkg: 'plugin-marketplace',
+    title: 'Third-party plugin discovery',
+    mode: 'core',
+    consumers: ['ui-settings-plugin-inventory'],
+    note: 'Caches bounded GitHub topic discovery, validates only selected repositories at pinned commits, and returns risk previews while installation remains fail-closed.',
+  },
 ]
 
 function generatedHeader(title: string): string[] {

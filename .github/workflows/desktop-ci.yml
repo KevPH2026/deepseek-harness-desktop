@@ -1,0 +1,89 @@
+name: Desktop CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PRIMARY_NODE_VERSION: '24'
+  DSH_TELEMETRY_DISABLED: '1'
+
+jobs:
+  quality:
+    name: Types, tests, runtime closure, and docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web and desktop code
+        run: |
+          npm run build
+          npm run build:desktop
+
+      - name: Verify product composition
+        run: |
+          pnpm run constraints
+          pnpm run verify-third-party-notices
+          pnpm run verify-package-invariants
+          pnpm run verify-cordis-config
+          pnpm run desktop:verify-runtime
+          npm run desktop:verify-built-main
+
+      - name: Test desktop product surfaces
+        run: >-
+          pnpm exec vitest run
+          apps/desktop/tests
+          packages/media/media-generation/tests
+          packages/host/plugin-marketplace/tests
+          packages/client/ui-settings-plugin-inventory/tests
+
+      - name: Verify bilingual product site
+        run: pnpm run docs:check
+
+  macos-package:
+    name: Unsigned macOS arm64 package smoke
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          cache: pnpm
+
+      - name: Require native Apple Silicon runner
+        run: test "$(uname -m)" = arm64
+
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+
+      # This produces a local verification app only. It is deliberately not
+      # uploaded: public downloads come exclusively from the signed/notarized
+      # Desktop Release workflow.
+      - name: Package and smoke-test the unsigned verification app
+        run: npm run desktop:pack:mac

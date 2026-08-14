@@ -412,7 +412,7 @@ export interface ConnectionConfig {
 }
 ```
 
-来源：[`packages/client/connection/src/index.ts:50`](../packages/client/connection/src/index.ts)
+来源：[`packages/client/connection/src/index.ts:51`](../packages/client/connection/src/index.ts)
 
 <a id="deepseek-aidsh-client-hmr"></a>
 
@@ -786,6 +786,38 @@ export interface Config {
 ```
 
 来源：[`packages/host/frontend-static/src/index.ts:28`](../packages/host/frontend-static/src/index.ts)
+
+<a id="deepseek-aidsh-host-plugin-marketplace"></a>
+
+## `@deepseek-ai/dsh-host-plugin-marketplace`
+
+需要：`storageDomain`
+
+```ts config-catalog
+/** Deployment policy; all limits are Host-owned and never sent by the browser. */
+export interface Config {
+  /** Milliseconds that a successful GitHub check remains fresh. */
+  readonly cacheTtlMs: number
+  /** Minimum milliseconds between admitted catalog refresh attempts. */
+  readonly minRefreshIntervalMs: number
+  /** Maximum milliseconds allowed for one catalog request. */
+  readonly requestTimeoutMs: number
+  /** Maximum repositories requested and retained from GitHub search. */
+  readonly maxResults: number
+  /** Milliseconds that a prepared import confirmation remains usable. */
+  readonly confirmationTtlMs: number
+  /** Maximum unexpired import confirmations retained in memory. */
+  readonly maxConfirmations: number
+  /** Milliseconds that a pinned repository validation verdict remains reusable. */
+  readonly validationTtlMs: number
+  /** Minimum milliseconds between newly admitted repository validations. */
+  readonly minValidationIntervalMs: number
+  /** Maximum milliseconds allowed for one complete pinned validation. */
+  readonly validationTimeoutMs: number
+}
+```
+
+来源：[`packages/host/plugin-marketplace/src/index.ts:61`](../packages/host/plugin-marketplace/src/index.ts)
 
 <a id="deepseek-aidsh-host-webserver"></a>
 
@@ -1278,6 +1310,89 @@ export interface ReconnectConfig {
 ```
 
 来源：[`packages/mcp/mcp-client/src/index.ts:98`](../packages/mcp/mcp-client/src/index.ts)
+
+<a id="deepseek-aidsh-media-generation"></a>
+
+## `@deepseek-ai/dsh-media-generation`
+
+需要：`tools` · `attachments`
+
+```ts config-catalog
+/** Plugin config and the same-named live settings-section value. */
+export type Config = MediaGenerationConfig
+
+/** Shared provider, approval, storage, and polling configuration. */
+export interface MediaGenerationConfig {
+  /** Provider operations that require interactive user approval. */
+  approval?: ApprovalPolicy
+  /** Image provider defaults and availability. */
+  image?: ImageGenerationConfig
+  /** Video provider defaults and availability. */
+  video?: VideoGenerationConfig
+  /** Maximum decoded bytes retained for one generated image. */
+  maxImageBytes?: number
+  /** Maximum downloaded bytes retained for one generated video. */
+  maxVideoBytes?: number
+  /** Milliseconds between Veo long-running operation reads. */
+  videoPollIntervalMs?: number
+  /** Milliseconds allowed for the complete Veo generation operation. */
+  videoTimeoutMs?: number
+}
+
+/** Provider-operation approval policy applied before billable requests. */
+export type ApprovalPolicy = 'always' | 'video-only' | 'never'
+
+/** OpenAI-compatible image provider configuration. */
+export interface ImageGenerationConfig {
+  /** Whether image provider requests are permitted. */
+  enabled?: boolean
+  /** Absolute HTTPS provider base URL, or an explicit loopback HTTP URL. */
+  baseURL?: string
+  /** Model identifier sent to the Images API. */
+  model?: string
+  /** Managed credential reference with an environment-variable fallback. */
+  apiKeyEnv?: string
+  /** Output size used when a tool call omits `size`. */
+  defaultSize?: ImageSize
+  /** Output quality used when a tool call omits `quality`. */
+  defaultQuality?: ImageQuality
+}
+
+/** Google Veo provider configuration. */
+export interface VideoGenerationConfig {
+  /** Whether video provider requests are permitted. */
+  enabled?: boolean
+  /** Absolute Google HTTPS base URL, or an explicit loopback HTTP emulator URL. */
+  baseURL?: string
+  /** Veo model identifier used for long-running prediction. */
+  model?: string
+  /** Managed credential reference with an environment-variable fallback. */
+  apiKeyEnv?: string
+  /** Output aspect ratio used when a tool call omits `aspect_ratio`. */
+  defaultAspectRatio?: VideoAspectRatio
+  /** Output duration used when a tool call omits `duration`. */
+  defaultDuration?: VideoDuration
+  /** Output resolution used when a tool call omits `resolution`. */
+  defaultResolution?: VideoResolution
+}
+
+/** Image dimensions accepted by the configured Images API. */
+export type ImageSize = 'auto' | '1024x1024' | '1536x1024' | '1024x1536'
+
+/** Image quality accepted by the configured Images API. */
+export type ImageQuality = 'auto' | 'low' | 'medium' | 'high'
+
+/** Output aspect ratios supported by the Veo adapter. */
+export type VideoAspectRatio = '16:9' | '9:16'
+
+/** Veo output durations expressed as seconds. */
+export type VideoDuration = '4' | '6' | '8'
+
+/** Output resolutions supported by the Veo adapter. */
+export type VideoResolution = '720p' | '1080p' | '4k'
+```
+
+来源：[`packages/media/media-generation/src/index.ts:138`](../packages/media/media-generation/src/index.ts)
 
 <a id="deepseek-aidsh-message-feedback"></a>
 

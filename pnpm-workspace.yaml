@@ -24,6 +24,11 @@ packages:
 # builds must resolve those matching names to this workspace's pinned sources.
 linkWorkspacePackages: true
 
+# A production-only desktop deployment lives under apps/desktop/.stage. Do not
+# let `pnpm run` mutate the workspace dependency mode before executing scripts;
+# installs and deploys are always explicit in this repository.
+verifyDepsBeforeRun: false
+
 overrides:
   '@deepseek-ai/cosmokit': 'link:vendor/cosmokit'
   '@deepseek-ai/schemastery': 'link:vendor/schemastery'
@@ -38,6 +43,10 @@ peerDependencyRules:
 # default and only allow scripts we need. esbuild (native binary) and lefthook
 # (git hooks) genuinely need theirs.
 allowBuilds:
+  electron: true
+  # Windows-only transitive packager pulled by electron-builder. The macOS
+  # desktop build never invokes its lifecycle script.
+  electron-winstaller: false
   esbuild: true
   lefthook: true
   # Cross-platform boundary for the persistent PTY backend, including ConPTY on Windows.

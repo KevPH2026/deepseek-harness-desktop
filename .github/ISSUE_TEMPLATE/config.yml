@@ -1,2 +1,8 @@
 blank_issues_enabled: false
-contact_links: []
+contact_links:
+  - name: DeepSeek Harness upstream / 上游项目
+    url: https://github.com/deepseek-ai/deepseek-harness
+    about: Use the upstream repository for questions or changes that are not specific to this community desktop edition.
+  - name: Release notes / 版本说明
+    url: https://github.com/KevPH2026/deepseek-harness-desktop/releases
+    about: Read published desktop versions, compatibility notes, and download information.

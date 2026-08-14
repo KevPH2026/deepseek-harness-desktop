@@ -225,12 +225,13 @@ async function collectHost(
  * @param ns - the namespace whose stored section changed.
  * @returns the expected wrapper frame.
  */
-function forwardedSettings(ns: string): HostFrame {
+function forwardedSettings(ns: string): unknown {
+  const revisionMatcher: unknown = expect.any(Number)
   return {
     type: 'host/remote-event',
     event: 'settings/document-updated',
     // The revision is the Host's own counter, so the matcher is the assertion.
-    args: [ns, expect.any(Number)], // oxlint-disable-line typescript/no-unsafe-assignment
+    args: [ns, revisionMatcher],
   }
 }
 
@@ -325,8 +326,9 @@ describe('settings domain', () => {
     // The settings seam is general: any plugin may register a namespace for
     // its own configuration. The Web configuration plane remains opt-in, so a
     // future internal plugin cannot become remotely configurable just by
-    // registering; locale, permission, conversation, theme, and the product
-    // onboarding namespace are intentionally admitted by this surface.
+    // registering; locale, permission, conversation, theme, media generation,
+    // and the product onboarding namespace are intentionally admitted by this
+    // surface.
     const ctx = await harness()
     ctx.settings.register(NS, AdapterConfig)
     ctx.settings.register(settingsNamespace('some-other-plugin'), z.object({ secretPath: z.string() }))
@@ -350,6 +352,9 @@ describe('settings domain', () => {
     ctx.settings.register(settingsNamespace('agent-loop'), z.object({
       maxParallelToolCalls: z.number().default(10),
     }))
+    ctx.settings.register(settingsNamespace('media-generation'), z.object({
+      imageProvider: z.string(),
+    }))
     ctx.settings.register(settingsNamespace('web-search-deepseek'), z.object({
       baseURL: z.string(),
     }))
@@ -358,7 +363,7 @@ describe('settings domain', () => {
     const value = expectOk(await api.settings.describe(request({})))
     expect(value.namespaces.map(view => view.ns)).toEqual([
       'llm-deepseek', 'permission', 'ui-theme', 'locale', 'ui-conversation',
-      'shell', 'agent-loop', 'web-search-deepseek',
+      'shell', 'agent-loop', 'media-generation', 'web-search-deepseek',
     ])
     const permission = expectOk(await api.settings.mutate(request({
       ns: 'permission',
@@ -380,16 +385,21 @@ describe('settings domain', () => {
       ops: [{ op: 'set', path: ['busyEnter'], value: 'steer' }],
     })))
     expect(conversation.value).toEqual({ busyEnter: 'steer' })
-    const bash = expectOk(await api.settings.mutate(request({
+    const shell = expectOk(await api.settings.mutate(request({
       ns: 'shell',
       ops: [{ op: 'set', path: ['timeoutMs'], value: 5_000 }],
     })))
-    expect(bash.value).toEqual({ timeoutMs: 5_000 })
+    expect(shell.value).toEqual({ timeoutMs: 5_000 })
     const agentLoop = expectOk(await api.settings.mutate(request({
       ns: 'agent-loop',
       ops: [{ op: 'set', path: ['maxParallelToolCalls'], value: 2 }],
     })))
     expect(agentLoop.value).toEqual({ maxParallelToolCalls: 2 })
+    const mediaGeneration = expectOk(await api.settings.mutate(request({
+      ns: 'media-generation',
+      ops: [{ op: 'set', path: ['imageProvider'], value: 'fal' }],
+    })))
+    expect(mediaGeneration.value).toEqual({ imageProvider: 'fal' })
     const webSearch = expectOk(await api.settings.mutate(request({
       ns: 'web-search-deepseek',
       ops: [{ op: 'set', path: ['baseURL'], value: 'https://search.test/v1' }],
