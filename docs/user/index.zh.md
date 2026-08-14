@@ -33,7 +33,7 @@ features:
 
 [English](index.md) | 中文
 
-![DeepSeek Harness Desktop 展示带来源信息的第三方插件市场](deepseek-harness-desktop-plugin-marketplace.zh.png)
+![DeepSeek Harness Desktop 能力总览：编程、图片、视频、模型、插件与更新](marketing/deepseek-harness-desktop-feature-map.zh.png)
 
 ## 你的 agent 应该拥有一个真正的工作区
 

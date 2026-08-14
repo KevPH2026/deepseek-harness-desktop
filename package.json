@@ -24,6 +24,7 @@
     "build:web": "pnpm --filter @deepseek-ai/dsh-web-frontend run build",
     "build:desktop": "pnpm --config.verify-deps-before-run=false --filter @deepseek-ai/dsh-desktop run build",
     "desktop:icon:mac": "pnpm --config.verify-deps-before-run=false --filter @deepseek-ai/dsh-desktop run icon:mac",
+    "desktop:marketing:render": "python3 scripts/render-desktop-marketing-assets.py",
     "desktop:dev": "npm run build && npm run build:desktop && pnpm --config.verify-deps-before-run=false --filter @deepseek-ai/dsh-desktop run start",
     "desktop:verify-runtime": "tsx scripts/verify-runtime-closure.ts --manifest apps/desktop/package.json",
     "desktop:verify-built-main": "node scripts/verify-desktop-built-main.mjs",

@@ -33,7 +33,7 @@ features:
 
 English | [中文](index.zh.md)
 
-![DeepSeek Harness Desktop showing the source-aware community plugin marketplace](deepseek-harness-desktop-plugin-marketplace.zh.png)
+![DeepSeek Harness Desktop capability map: code, image, video, models, plugins, and updates](marketing/deepseek-harness-desktop-feature-map.en.png)
 
 ## Your agent should have a real workspace
 

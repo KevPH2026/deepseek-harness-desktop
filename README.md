@@ -15,7 +15,7 @@ English | [中文](README.zh.md)
   <img alt="macOS Apple Silicon" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111827?style=flat-square&logo=apple">
 </p>
 
-![DeepSeek Harness Desktop showing the source-aware community plugin marketplace](docs/user/deepseek-harness-desktop-plugin-marketplace.zh.png)
+![DeepSeek Harness Desktop product tour: workspace, multimodal tools, plugin discovery, and community](docs/user/marketing/deepseek-harness-desktop-tour.en.gif)
 
 > [!IMPORTANT]
 >
@@ -32,6 +32,8 @@ DeepSeek Harness already provides a capable plugin-based agent harness. This com
 | Extend for your workflow | Discover community plugins by scenario, inspect trust signals, and validate one selected repository at a time; installation remains disabled in the source beta. |
 | Connect your model stack | Use DeepSeek and supported compatible providers or gateways without coupling the desktop shell to one inference backend. |
 | Stay current | Read release notes in the app, check signed GitHub Releases, and choose when to download and install an update. |
+
+![DeepSeek Harness Desktop capability map: code, image, video, models, plugins, and updates](docs/user/marketing/deepseek-harness-desktop-feature-map.en.png)
 
 ## Highlights
 

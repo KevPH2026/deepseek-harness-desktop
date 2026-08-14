@@ -15,7 +15,7 @@
   <img alt="macOS Apple Silicon" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111827?style=flat-square&logo=apple">
 </p>
 
-![DeepSeek Harness Desktop 展示带来源信息的第三方插件市场](docs/user/deepseek-harness-desktop-plugin-marketplace.zh.png)
+![DeepSeek Harness Desktop 产品动图：桌面工作区、多模态工具、插件发现与社区](docs/user/marketing/deepseek-harness-desktop-tour.zh.gif)
 
 > [!IMPORTANT]
 >
@@ -32,6 +32,8 @@ DeepSeek Harness 已经提供了强大的插件化 agent harness（智能体框�
 | 扩展不同工作流 | 按场景发现社区插件、检查信任信息，并按需验证单个仓库；当前源码 Beta 尚未开放安装。 |
 | 接入自己的模型体系 | 使用 DeepSeek、受支持的兼容提供方或网关，桌面外壳不会绑定单一推理后端。 |
 | 持续保持更新 | 在应用内阅读版本说明、检查已签名的 GitHub Release，并自行决定何时下载与安装。 |
+
+![DeepSeek Harness Desktop 能力总览：编程、图片、视频、模型、插件与更新](docs/user/marketing/deepseek-harness-desktop-feature-map.zh.png)
 
 ## 亮点功能
 
