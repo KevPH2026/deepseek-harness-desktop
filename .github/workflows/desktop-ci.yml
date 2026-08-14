@@ -1,3 +1,4 @@
+# Community fork gate: validate desktop source without publishing artifacts.
 name: Desktop CI
 
 on:

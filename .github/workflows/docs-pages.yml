@@ -1,3 +1,4 @@
+# Publish the bilingual VitePress product site through GitHub Pages.
 name: Deploy documentation
 
 on:
