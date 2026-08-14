@@ -6,13 +6,16 @@ import type {
   PluginMarketplaceValidateCatalogItemResult,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import {
+  IconCheckOutline16,
   IconCodeOutline16,
+  IconCopyOutline16,
   IconDownloadOutline16,
   IconFolderOpenOutline16,
   IconLinkOutline16,
   IconPlusOutline16,
   IconSearchOutline16,
   IconWarningOutline16,
+  writeClipboard,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PluginInventoryLocaleKey } from './locales.ts'
@@ -132,6 +135,10 @@ export function PluginMarketplaceSettingsTab({
   const [customSource, setCustomSource] = useState('')
   const [validatingId, setValidatingId] = useState<string>()
   const [validationError, setValidationError] = useState<string>()
+  const [templateCopy, setTemplateCopy] = useState<{
+    readonly path: string
+    readonly status: 'copied' | 'error'
+  }>()
 
   useEffect(() => {
     let current = true
@@ -192,6 +199,15 @@ export function PluginMarketplaceSettingsTab({
         setValidationError(t('marketValidationError'))
       },
     )
+  }
+
+  const copyTemplateFile = (
+    file: PluginMarketplaceResources['template']['files'][number],
+  ): void => {
+    setTemplateCopy(undefined)
+    void writeClipboard(file.content).then((copied) => {
+      setTemplateCopy({ path: file.path, status: copied ? 'copied' : 'error' })
+    })
   }
 
   return (
@@ -421,6 +437,46 @@ export function PluginMarketplaceSettingsTab({
           </div>
         </div>
       </section>
+
+      {links !== undefined && links.template.files.length > 0 ? (
+        <section className={css.starter} aria-labelledby="plugin-starter-title">
+          <div className={css.sectionHeading}>
+            <h4 id="plugin-starter-title">{t('marketStarterTitle')}</h4>
+            <p>{t('marketStarterIntro')}</p>
+          </div>
+          <div className={css.templateFiles}>
+            {links.template.files.map((file) => {
+              const copied = templateCopy?.path === file.path && templateCopy.status === 'copied'
+              return (
+                <article className={css.templateFile} key={file.path} data-template-file={file.path}>
+                  <div>
+                    <code>{file.path}</code>
+                    <button
+                      type="button"
+                      aria-label={`${copied ? t('marketStarterCopied') : t('marketStarterCopy')} ${file.path}`}
+                      onClick={() => { copyTemplateFile(file) }}
+                    >
+                      {copied
+                        ? <IconCheckOutline16 aria-hidden="true" />
+                        : <IconCopyOutline16 aria-hidden="true" />}
+                      {copied ? t('marketStarterCopied') : t('marketStarterCopy')}
+                    </button>
+                  </div>
+                  <pre><code>{file.content}</code></pre>
+                </article>
+              )
+            })}
+          </div>
+          <p className={css.copyStatus} aria-live="polite">
+            {templateCopy?.status === 'copied'
+              ? `${templateCopy.path}: ${t('marketStarterCopied')}`
+              : ''}
+          </p>
+          {templateCopy?.status === 'error' ? (
+            <p className={css.templateError} role="alert">{t('marketStarterCopyError')}</p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   )
 }

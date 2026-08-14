@@ -116,6 +116,28 @@ describe('desktop updater orchestration', () => {
     vi.useRealTimers()
   })
 
+  it('preserves a manual result dialog when it joins the startup check', async () => {
+    let resolveCheck!: (result: DesktopUpdateCheckResult | null) => void
+    const client = fakeClient()
+    client.checkForUpdates.mockImplementation(async () => await new Promise((resolve) => {
+      resolveCheck = resolve
+    }))
+    const prompts = fakePrompts()
+    const service = createDesktopUpdateService({
+      client, prompts, eligibility: signed, currentVersion: '0.1.0', logger: { warn: vi.fn() },
+    })
+
+    service.start()
+    expect(client.checkForUpdates.mock.calls).toHaveLength(1)
+    const manualCheck = service.check(true)
+    expect(client.checkForUpdates.mock.calls).toHaveLength(1)
+    resolveCheck({ isUpdateAvailable: false, update: { version: '0.1.0' } })
+    await manualCheck
+
+    expect(prompts.showUpToDate.mock.calls).toEqual([['0.1.0']])
+    service.stop()
+  })
+
   it('asks before download and again before restart/install', async () => {
     const update = { version: '0.2.0', releaseName: 'Desktop 0.2.0' }
     const client = fakeClient({ isUpdateAvailable: true, update })

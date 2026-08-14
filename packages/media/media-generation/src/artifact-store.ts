@@ -1,8 +1,8 @@
 /** Private content-addressed image/video storage plus a loopback Range route. */
 
 import { createHash, randomUUID } from 'node:crypto'
-import { createReadStream } from 'node:fs'
-import { chmod, link, mkdir, open, stat, unlink } from 'node:fs/promises'
+import { constants } from 'node:fs'
+import { chmod, link, mkdir, open, type FileHandle, unlink } from 'node:fs/promises'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { isTrustedApiRequest } from '@deepseek-ai/dsh-client-connection'
 import { join } from 'node:path'
@@ -16,6 +16,28 @@ interface DetectedMedia {
 }
 
 const FILE_NAME = /^[a-f0-9]{64}\.(?:png|jpg|webp|gif|mp4)$/
+
+function openReadOnlyNoFollow(path: string): Promise<FileHandle> {
+  const flags = process.platform === 'win32'
+    ? constants.O_RDONLY
+    : constants.O_RDONLY | constants.O_NOFOLLOW
+  return open(path, flags)
+}
+
+async function verifyExistingArtifact(path: string, sha256: string, bytes: number): Promise<void> {
+  let handle: FileHandle | undefined
+  try {
+    handle = await openReadOnlyNoFollow(path)
+    const info = await handle.stat()
+    if (!info.isFile() || info.size !== bytes) throw new Error('metadata mismatch')
+    const existing = await handle.readFile()
+    if (createHash('sha256').update(existing).digest('hex') !== sha256) throw new Error('digest mismatch')
+  } catch (error) {
+    throw new Error('existing generated media artifact failed integrity verification', { cause: error })
+  } finally {
+    await handle?.close().catch(() => undefined)
+  }
+}
 
 /**
  * Determine the supported media container from trusted magic bytes, never MIME headers.
@@ -187,15 +209,16 @@ export class GeneratedMediaStore {
     const fileName = `${sha256}.${detected.extension}`
     const target = join(this.root, fileName)
     try {
-      await link(temporary, target)
-      await chmod(target, 0o600)
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
-        await unlink(temporary).catch(() => undefined)
-        throw error
+      try {
+        await link(temporary, target)
+        await chmod(target, 0o600)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+        await verifyExistingArtifact(target, sha256, bytes)
       }
+    } finally {
+      await unlink(temporary).catch(() => undefined)
     }
-    await unlink(temporary).catch(() => undefined)
     return {
       kind: detected.kind,
       url: `${MEDIA_ROUTE_PREFIX}/${fileName}`,
@@ -230,12 +253,15 @@ export class GeneratedMediaStore {
       return
     }
     const path = join(this.root, fileName)
+    let handle: FileHandle | undefined
     let size: number
     try {
-      const info = await stat(path)
+      handle = await openReadOnlyNoFollow(path)
+      const info = await handle.stat()
       if (!info.isFile()) throw new Error('not a file')
       size = info.size
     } catch {
+      await handle?.close().catch(() => undefined)
       res.writeHead(404)
       res.end()
       return
@@ -257,6 +283,7 @@ export class GeneratedMediaStore {
     if (range !== undefined) {
       const match = /^bytes=(\d*)-(\d*)$/.exec(range)
       if (match === null || (match[1] === '' && match[2] === '')) {
+        await handle.close()
         res.writeHead(416, { ...common, 'Content-Range': `bytes */${size}` })
         res.end()
         return
@@ -264,6 +291,7 @@ export class GeneratedMediaStore {
       if (match[1] === '') {
         const suffix = Number(match[2])
         if (!Number.isSafeInteger(suffix) || suffix <= 0) {
+          await handle.close()
           res.writeHead(416, { ...common, 'Content-Range': `bytes */${size}` })
           res.end()
           return
@@ -275,6 +303,7 @@ export class GeneratedMediaStore {
       }
       if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end)
         || start < 0 || end < start || start >= size) {
+        await handle.close()
         res.writeHead(416, { ...common, 'Content-Range': `bytes */${size}` })
         res.end()
         return
@@ -290,10 +319,11 @@ export class GeneratedMediaStore {
       res.writeHead(200, { ...common, 'Content-Length': String(size) })
     }
     if (req.method === 'HEAD') {
+      await handle.close()
       res.end()
       return
     }
-    const stream = createReadStream(path, { start, end })
+    const stream = handle.createReadStream({ start, end })
     stream.once('error', () => { res.destroy() })
     res.once('close', () => { stream.destroy() })
     stream.pipe(res)

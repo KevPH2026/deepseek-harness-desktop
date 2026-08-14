@@ -56,8 +56,8 @@ const releaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/[^/]+|vendor\/[
  * the repository's ordinary public-release requirements.
  *
  * These entries deliberately remain selected by the official dsh release
- * family. `web-app` has runtime dependencies on the private media and
- * plugin-marketplace packages, so
+ * family. `web-app` has runtime dependencies on the private community UI,
+ * media, and plugin-marketplace packages, so
  * filtering only the private package would produce an incomplete upstream
  * publish set. The independent desktop version makes normal release
  * verification fail, and the private flags make publish verification fail if
@@ -65,6 +65,7 @@ const releaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/[^/]+|vendor\/[
  */
 const communityOnlyDirectories = new Set([
   'apps/desktop',
+  'packages/client/ui-settings-about-community',
   'packages/host/plugin-marketplace',
   'packages/media/media-generation',
 ])

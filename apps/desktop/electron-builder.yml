@@ -45,6 +45,8 @@ extraResources:
     to: app/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.zh.md
   - from: .stage/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.i18n.yaml
     to: app/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.i18n.yaml
+  - from: .stage/node_modules/@deepseek-ai/dsh-client-ui-settings-about-community/README.md
+    to: app/node_modules/@deepseek-ai/dsh-client-ui-settings-about-community/README.md
 
 # Harness resolves plugins, workers, native modules, and node-pty helpers from
 # real filesystem paths. The first desktop release keeps its runtime outside

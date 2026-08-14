@@ -114,6 +114,19 @@ describe('virtualManifest', () => {
     }
   })
 
+  it('ignores an empty prefix-matching directory left by a partial optional install', () => {
+    const root = mkdtempSync(join(tmpdir(), 'dsh-notices-partial-'))
+    try {
+      const name = '@scope/pkg'
+      const store = join(root, 'store')
+      mkdirSync(join(store, '@scope+pkg@1.0.0'), { recursive: true })
+
+      expect(virtualManifest(store, name)).toBeUndefined()
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   it('returns undefined when neither the prefix nor the content scan finds the package', () => {
     const root = mkdtempSync(join(tmpdir(), 'dsh-notices-miss-'))
     try {

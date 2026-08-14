@@ -104,6 +104,7 @@ export function createDesktopUpdateService(options: DesktopUpdateServiceOptions)
   let stopped = false
   let timer: NodeJS.Timeout | undefined
   let checking: Promise<void> | undefined
+  let interactiveRequested = false
   let downloadedPrompt: Promise<void> | undefined
 
   options.client.configure()
@@ -120,8 +121,12 @@ export function createDesktopUpdateService(options: DesktopUpdateServiceOptions)
     if (!options.eligibility.enabled) {
       return Promise.resolve(interactive ? options.prompts.showUnavailable(options.eligibility.reason) : undefined)
     }
+    if (interactive) interactiveRequested = true
     if (checking !== undefined) return checking
-    checking = checkOnce(interactive).finally(() => { checking = undefined })
+    checking = checkOnce().finally(() => {
+      checking = undefined
+      interactiveRequested = false
+    })
     return checking
   }
 
@@ -143,18 +148,18 @@ export function createDesktopUpdateService(options: DesktopUpdateServiceOptions)
     check,
   }
 
-  async function checkOnce(interactive: boolean): Promise<void> {
+  async function checkOnce(): Promise<void> {
     try {
       const result = await options.client.checkForUpdates()
       if (result === null || !result.isUpdateAvailable) {
-        if (interactive) await options.prompts.showUpToDate(options.currentVersion)
+        if (interactiveRequested) await options.prompts.showUpToDate(options.currentVersion)
         return
       }
       if (await options.prompts.confirmDownload(result.update)) await options.client.downloadUpdate()
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       options.logger.warn(`desktop updater check failed: ${message}`)
-      if (interactive) await options.prompts.showError(message)
+      if (interactiveRequested) await options.prompts.showError(message)
     }
   }
 

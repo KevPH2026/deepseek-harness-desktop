@@ -1,5 +1,5 @@
 import { createServer, request, type Server } from 'node:http'
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, stat, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -78,6 +78,26 @@ describe('generated media artifacts', () => {
     expect((await stat(store.root)).mode & 0o777).toBe(0o700)
   })
 
+  it('rejects a corrupt existing content-addressed target and removes staging bytes', async () => {
+    const store = new GeneratedMediaStore()
+    const first = await store.saveBytes(PNG, 'image', 1024 * 1024, {
+      model: 'fixture-image',
+      provider: 'openai-images',
+    })
+    await expect(store.saveBytes(PNG, 'image', 1024 * 1024, {
+      model: 'fixture-image',
+      provider: 'openai-images',
+    })).resolves.toEqual(first)
+    const path = join(store.root, first.url.split('/').at(-1) as string)
+    await writeFile(path, Buffer.alloc(PNG.byteLength))
+
+    await expect(store.saveBytes(PNG, 'image', 1024 * 1024, {
+      model: 'fixture-image',
+      provider: 'openai-images',
+    })).rejects.toThrow('existing generated media artifact failed integrity verification')
+    expect((await readdir(store.root)).filter(name => name.startsWith('.tmp-'))).toEqual([])
+  })
+
   it('serves only hashed media names and honors single byte ranges', async () => {
     const store = new GeneratedMediaStore()
     const artifact = await store.saveBytes(PNG, 'image', 1024 * 1024, {
@@ -116,6 +136,28 @@ describe('generated media artifacts', () => {
       rebound.end()
     })
     expect(reboundStatus).toBe(403)
+  })
+
+  it.skipIf(process.platform === 'win32')('does not serve a symbolic-link artifact target', async () => {
+    const store = new GeneratedMediaStore()
+    const artifact = await store.saveBytes(PNG, 'image', 1024 * 1024, {
+      model: 'fixture-image',
+      provider: 'openai-images',
+    })
+    const artifactPath = join(store.root, artifact.url.split('/').at(-1) as string)
+    const outside = join(home, 'outside.png')
+    await writeFile(outside, PNG)
+    await rm(artifactPath)
+    await symlink(outside, artifactPath)
+    server = createServer((req, res) => { void store.handleRequest(req, res) })
+    await new Promise<void>((resolve, reject) => {
+      server?.once('error', reject)
+      server?.listen(0, '127.0.0.1', resolve)
+    })
+    const address = server.address()
+    if (address === null || typeof address === 'string') throw new Error('fixture server did not bind')
+
+    expect((await fetch(`http://127.0.0.1:${String(address.port)}${artifact.url}`)).status).toBe(404)
   })
 
   it('leaves no published artifact when the full image validator rejects', async () => {

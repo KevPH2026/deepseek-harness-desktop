@@ -95,7 +95,27 @@ const RESOURCES = {
   topicUrl: 'https://github.com/topics/dsh-plugin',
   docsUrl: 'https://example.test/docs',
   publishGuideUrl: 'https://example.test/publish',
-  template: { files: [] },
+  template: {
+    files: [
+      { path: 'index.js', content: 'export function apply() {}\n' },
+      { path: 'package.json', content: '{"name":"fixture-plugin"}\n' },
+    ],
+  },
+} as const
+
+function installClipboard(writeText: (text: string) => Promise<void>): () => void {
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText },
+  })
+  return () => {
+    if (descriptor === undefined) {
+      Reflect.deleteProperty(navigator, 'clipboard')
+      return
+    }
+    Object.defineProperty(navigator, 'clipboard', descriptor)
+  }
 }
 
 function props(
@@ -155,6 +175,40 @@ describe('PluginMarketplaceSettingsTab', () => {
     const button = screen.getByRole('button', { name: en.marketImportReady }) as HTMLButtonElement
     expect(button.disabled).toBe(true)
     expect(screen.getByText(/@fixture\/design-plugin/)).toBeTruthy()
+  })
+
+  it('copies starter-template files without installing or executing a plugin', async () => {
+    const writeText = vi.fn(async () => {})
+    const restoreClipboard = installClipboard(writeText)
+    try {
+      render(<PluginMarketplaceSettingsTab {...props(async () => snapshot([]))} />)
+
+      expect(await screen.findByRole('heading', { name: en.marketStarterTitle })).toBeTruthy()
+      expect(screen.getByText(en.marketStarterIntro)).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: `${en.marketStarterCopy} index.js` }))
+
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledExactlyOnceWith(RESOURCES.template.files[0].content)
+      })
+      expect(screen.getByRole('button', { name: `${en.marketStarterCopied} index.js` })).toBeTruthy()
+      expect(screen.getByText(`index.js: ${en.marketStarterCopied}`)).toBeTruthy()
+    } finally {
+      restoreClipboard()
+    }
+  })
+
+  it('reports a refused template copy without claiming success', async () => {
+    const restoreClipboard = installClipboard(async () => { throw new Error('clipboard denied') })
+    try {
+      render(<PluginMarketplaceSettingsTab {...props(async () => snapshot([]))} />)
+      await screen.findByRole('heading', { name: en.marketStarterTitle })
+      fireEvent.click(screen.getByRole('button', { name: `${en.marketStarterCopy} package.json` }))
+
+      expect((await screen.findByRole('alert')).textContent).toBe(en.marketStarterCopyError)
+      expect(screen.queryByRole('button', { name: `${en.marketStarterCopied} package.json` })).toBeNull()
+    } finally {
+      restoreClipboard()
+    }
   })
 
   it('keeps an invalid manifest unavailable and shows the validation reason', async () => {

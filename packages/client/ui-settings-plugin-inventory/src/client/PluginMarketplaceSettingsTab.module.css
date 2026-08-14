@@ -397,7 +397,8 @@
 }
 
 .offers,
-.custom {
+.custom,
+.starter {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -522,6 +523,89 @@
 .importGate ul {
   margin: 5px 0 0;
   padding-left: 17px;
+}
+
+.starter {
+  padding: 13px;
+}
+
+.templateFiles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+}
+
+.templateFile {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.templateFile > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  padding: 7px 9px;
+}
+
+.templateFile > div > code {
+  overflow-wrap: anywhere;
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--ds-font-family-code);
+  font-size: 11px;
+}
+
+.templateFile button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.templateFile button:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.templateFile pre {
+  max-height: 220px;
+  margin: 0;
+  overflow: auto;
+  padding: 10px;
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--ds-font-family-code);
+  font-size: 10px;
+  line-height: 16px;
+  white-space: pre;
+}
+
+.copyStatus,
+.templateError {
+  min-height: 17px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 17px;
+}
+
+.copyStatus {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.templateError {
+  color: var(--dsw-alias-state-error-primary);
 }
 
 .visuallyHidden {
