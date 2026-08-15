@@ -1,5 +1,6 @@
 {
   "source": "apps/web/public/favicon.svg",
   "sourceSha256": "c61a62a9d47d8660f9cfe08aac6775ff0476f7d6c5053f7659c1f8493fd6d814",
-  "icnsSha256": "97baa26a8921f8bb01c69aee5640f1ed11c39a34321c7d0ea08a08a230b145d9"
+  "icnsSha256": "97baa26a8921f8bb01c69aee5640f1ed11c39a34321c7d0ea08a08a230b145d9",
+  "trayPngSha256": "da5b430494c7299e94538a5c2f7ab29ffecf84721bffd114e39539ea5c4d8d38"
 }

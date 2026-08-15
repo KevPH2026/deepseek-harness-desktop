@@ -13,6 +13,7 @@ const root = resolve(desktop, '../..')
 const source = join(root, 'apps', 'web', 'public', 'favicon.svg')
 const outputDirectory = join(desktop, 'build')
 const output = join(outputDirectory, 'icon.icns')
+const trayOutput = join(outputDirectory, 'tray-icon.png')
 const provenance = join(outputDirectory, 'icon-source.json')
 const sourceBefore = await readFile(source)
 const sourceHash = sha256(sourceBefore)
@@ -43,6 +44,10 @@ try {
       .png({ compressionLevel: 9, palette: false })
       .toFile(join(iconset, filename))
   }))
+  await sharp(sourceBefore, { density: 512 })
+    .resize(36, 36, { fit: 'fill' })
+    .png({ compressionLevel: 9, palette: false })
+    .toFile(trayOutput)
   execFileSync('/usr/bin/iconutil', ['--convert', 'icns', '--output', output, iconset])
 } finally {
   await rm(temporary, { recursive: true, force: true })
@@ -51,10 +56,12 @@ try {
 const sourceAfter = await readFile(source)
 if (sha256(sourceAfter) !== sourceHash) throw new Error('generate-icon: source favicon changed during conversion')
 const iconHash = sha256(await readFile(output))
+const trayIconHash = sha256(await readFile(trayOutput))
 await writeFile(provenance, `${JSON.stringify({
   source: 'apps/web/public/favicon.svg',
   sourceSha256: sourceHash,
   icnsSha256: iconHash,
+  trayPngSha256: trayIconHash,
 }, null, 2)}\n`)
 console.log(`generate-icon: ${output} from apps/web/public/favicon.svg (${sourceHash})`)
 

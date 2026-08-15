@@ -4,6 +4,7 @@ import {
   COMMUNITY_REPOSITORY_URL,
   desktopAboutOptions,
   desktopMenuTemplate,
+  desktopTrayTemplate,
   FEEDBACK_URL,
   isChineseDesktopLocale,
   RELEASE_NOTES_URL,
@@ -21,6 +22,28 @@ describe('desktop native localization', () => {
     expect(isChineseDesktopLocale('zh-Hans-CN')).toBe(true)
     expect(isChineseDesktopLocale('zh_TW')).toBe(true)
     expect(isChineseDesktopLocale('en-US')).toBe(false)
+  })
+
+  it('localizes the persistent tray actions and keeps release/support targets', () => {
+    const showWindow = vi.fn()
+    const checkForUpdates = vi.fn(async () => {})
+    const openExternal = vi.fn(async (_url: string) => {})
+    const quit = vi.fn(async () => {})
+    const template = desktopTrayTemplate('zh-CN', { showWindow, checkForUpdates, openExternal, quit })
+
+    expect(template.map(item => item.label).filter(Boolean)).toEqual([
+      'Harness 运行中', '打开主窗口', '检查更新…', '版本说明', '反馈问题', '退出',
+    ])
+    template[1]?.click?.(undefined as never, undefined, undefined as never)
+    template[3]?.click?.(undefined as never, undefined, undefined as never)
+    template[4]?.click?.(undefined as never, undefined, undefined as never)
+    template[5]?.click?.(undefined as never, undefined, undefined as never)
+    template[7]?.click?.(undefined as never, undefined, undefined as never)
+    expect(showWindow).toHaveBeenCalledOnce()
+    expect(checkForUpdates).toHaveBeenCalledOnce()
+    expect(openExternal).toHaveBeenNthCalledWith(1, RELEASE_NOTES_URL)
+    expect(openExternal).toHaveBeenNthCalledWith(2, FEEDBACK_URL)
+    expect(quit).toHaveBeenCalledOnce()
   })
 
   it('shows Chinese community attribution in About for zh-CN', () => {

@@ -7,6 +7,7 @@ interface IconProvenance {
   source: string
   sourceSha256: string
   icnsSha256: string
+  trayPngSha256: string
 }
 
 const root = resolve(import.meta.dirname, '../../..')
@@ -19,14 +20,17 @@ describe('desktop icon provenance', () => {
     ) as IconProvenance
     const source = await readFile(join(root, provenance.source))
     const icon = await readFile(join(desktopBuild, 'icon.icns'))
+    const trayIcon = await readFile(join(desktopBuild, 'tray-icon.png'))
 
     expect(provenance).toEqual({
       source: 'apps/web/public/favicon.svg',
       sourceSha256: 'c61a62a9d47d8660f9cfe08aac6775ff0476f7d6c5053f7659c1f8493fd6d814',
       icnsSha256: sha256(icon),
+      trayPngSha256: sha256(trayIcon),
     })
     expect(sha256(source)).toBe(provenance.sourceSha256)
     expect(icon.subarray(0, 4).toString('ascii')).toBe('icns')
+    expect(trayIcon.subarray(1, 4).toString('ascii')).toBe('PNG')
   })
 })
 

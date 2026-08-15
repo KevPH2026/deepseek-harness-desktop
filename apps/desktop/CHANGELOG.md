@@ -16,6 +16,9 @@ It does not describe an official DeepSeek desktop product.
 - Added native current-version, update-check, release-notes, and feedback menu
   entries. Signed beta builds can follow the beta GitHub Release channel and
   ask before download and restart.
+- Added a localized system tray backed by the official Harness artwork. Closing
+  the main window now keeps the current session alive; the tray restores the
+  window, exposes update and support actions, and performs a graceful quit.
 
 This beta changelog is source documentation. Only Developer ID-signed and Apple-
 notarized GitHub Release artifacts are intended for distribution; local unsigned
@@ -35,6 +38,8 @@ packages are verification artifacts.
 - 新增社区插件列表的只读发现；本版本不会安装或执行第三方市场插件。
 - 新增原生菜单入口，可查看当前版本、检查更新、打开版本说明与提交反馈。已签名 beta
   版本可跟随 GitHub Release beta 通道，并在下载与重启前分别征求用户确认。
+- 新增使用 Harness 官方图形的中英文系统托盘。关闭主窗口后当前会话继续运行；
+  可从托盘恢复窗口、检查更新、打开帮助入口，或在安全停止 Harness 后完全退出。
 
 本 beta 版本说明属于源码文档。只有经过 Developer ID 签名、Apple 公证并发布到
 GitHub Release 的产物才用于分发；本地未签名包仅作为验证产物。

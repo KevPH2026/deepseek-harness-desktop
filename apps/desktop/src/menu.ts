@@ -35,6 +35,9 @@ interface DesktopNativeCopy {
   checkUpdates: string
   releaseNotes: string
   feedback: string
+  openWindow: string
+  running: string
+  quit: string
   copyright: string
   credits: string
 }
@@ -77,6 +80,9 @@ function nativeCopy(locale: string): DesktopNativeCopy {
       checkUpdates: '检查更新…',
       releaseNotes: '版本说明',
       feedback: '反馈问题',
+      openWindow: '打开主窗口',
+      running: 'Harness 运行中',
+      quit: '退出',
       copyright: 'DeepSeek Harness 版权所有 (c) 2026 DeepSeek',
       credits: `非官方社区桌面封装，由 ${COMMUNITY_MAINTAINER} 维护。\n\n基于 DeepSeek Harness，并按 MIT 许可证分发。`,
     }
@@ -95,6 +101,9 @@ function nativeCopy(locale: string): DesktopNativeCopy {
     checkUpdates: 'Check for Updates…',
     releaseNotes: 'Release Notes',
     feedback: 'Send Feedback',
+    openWindow: 'Open Main Window',
+    running: 'Harness is running',
+    quit: 'Quit',
     copyright: 'DeepSeek Harness copyright (c) 2026 DeepSeek',
     credits: `Unofficial community desktop wrapper maintained by ${COMMUNITY_MAINTAINER}.\n\nBased on DeepSeek Harness and distributed under the MIT License.`,
   }
@@ -166,5 +175,35 @@ export function desktopMenuTemplate(
         { label: copy.notices, click: () => { void actions.openExternal(THIRD_PARTY_NOTICES_URL) } },
       ],
     },
+  ]
+}
+
+/** Runtime actions available from the persistent system-tray menu. */
+export interface DesktopTrayActions {
+  /** Restore or recreate the desktop window. */
+  showWindow: () => void
+  /** Run the same interactive updater used by the native application menu. */
+  checkForUpdates: () => Promise<void> | void
+  /** Open a validated HTTP(S) target in the system browser. */
+  openExternal: ExternalOpener
+  /** Gracefully stop Harness and terminate the desktop process. */
+  quit: () => Promise<void> | void
+}
+
+/** Build the locale-aware system-tray menu. */
+export function desktopTrayTemplate(
+  locale: string,
+  actions: DesktopTrayActions,
+): MenuItemConstructorOptions[] {
+  const copy = nativeCopy(locale)
+  return [
+    { label: copy.running, enabled: false },
+    { label: copy.openWindow, click: actions.showWindow },
+    { type: 'separator' },
+    { label: copy.checkUpdates, click: () => { void actions.checkForUpdates() } },
+    { label: copy.releaseNotes, click: () => { void actions.openExternal(RELEASE_NOTES_URL) } },
+    { label: copy.feedback, click: () => { void actions.openExternal(FEEDBACK_URL) } },
+    { type: 'separator' },
+    { label: copy.quit, click: () => { void actions.quit() } },
   ]
 }

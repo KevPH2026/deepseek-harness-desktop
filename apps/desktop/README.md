@@ -6,6 +6,11 @@ English | [中文](README.zh.md)
 
 Electron desktop shell for the existing DeepSeek Harness Web workspace. The desktop process starts one supervised Harness child on an operating-system-assigned `127.0.0.1` port, opens that exact origin in a locked-down renderer, and stops the child before the app exits.
 
+Closing the main window now keeps Harness available in the system tray instead
+of tearing down the active session. The localized tray shows runtime status,
+restores the window, checks for updates, opens release notes or feedback, and
+performs a graceful whole-app quit.
+
 DeepSeek Harness retains its original `Copyright (c) 2026 DeepSeek` notice. This community wrapper is distributed under the upstream [MIT License](../../LICENSE); bundled dependencies and their licenses are listed in [Third-Party Notices](../../THIRD_PARTY_NOTICES.md).
 
 Community source, feedback, and desktop releases live at
@@ -31,7 +36,9 @@ npm run desktop:icon:mac
 ```
 
 The command rasterizes the same SVG into Apple's required icon sizes and writes
-`apps/desktop/build/icon.icns`.
+`apps/desktop/build/icon.icns`. It also produces the small tray image from those
+same pinned source bytes, so the Dock, app bundle, and tray retain the official
+Harness artwork.
 
 ## macOS packaging
 
@@ -96,7 +103,12 @@ Loopback transport is a same-user trust boundary, not authentication against
 other native processes running under the logged-in account. Do not run an
 untrusted local process alongside a sensitive Harness session.
 
-Closing the last window on macOS keeps the Harness process available for Dock reactivation. Explicit Quit sends `SIGTERM`, waits up to eight seconds for complete exit, then sends `SIGKILL` only when graceful teardown did not reach quiescence.
+Closing the main window hides it to the system tray on every supported desktop
+platform; the renderer, active session, updater, and Harness process stay alive.
+The tray, macOS Dock, or a second launch restores the existing window instead of
+starting another Host. Explicit Quit sends `SIGTERM`, waits up to eight seconds
+for complete exit, then sends `SIGKILL` only when graceful teardown did not reach
+quiescence.
 An early Quit also cancels a pending launch, and POSIX teardown signals the
 owned process group so tool subprocesses do not outlive the desktop app.
 

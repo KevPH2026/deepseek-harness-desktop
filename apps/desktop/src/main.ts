@@ -6,11 +6,14 @@
 import { appendFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, Menu, shell, type MessageBoxOptions } from 'electron'
+import {
+  app, BrowserWindow, dialog, Menu, nativeImage, shell, Tray, type MessageBoxOptions,
+} from 'electron'
 import electronUpdater, { type UpdateInfo } from 'electron-updater'
 import { launchHarness, type HarnessHandle } from './harness-process.ts'
 import {
-  DESKTOP_PRODUCT_NAME, desktopAboutOptions, desktopMenuTemplate, isChineseDesktopLocale,
+  DESKTOP_PRODUCT_NAME, desktopAboutOptions, desktopMenuTemplate, desktopTrayTemplate,
+  isChineseDesktopLocale,
 } from './menu.ts'
 import { externalHttpUrl, isHarnessNavigation } from './navigation.ts'
 import { createDesktopShutdown } from './shutdown.ts'
@@ -21,6 +24,7 @@ import {
   type DesktopUpdatePrompts, type DesktopUpdateService,
 } from './updater.ts'
 import { readDesktopUpdaterVersion } from './version.ts'
+import { createDesktopWindowLifecycle } from './window-lifecycle.ts'
 
 const PRODUCT_NAME = DESKTOP_PRODUCT_NAME
 // electron-updater is CommonJS. Its runtime `autoUpdater` export is available
@@ -30,6 +34,7 @@ const { MacUpdater } = electronUpdater
 app.setName(PRODUCT_NAME)
 
 let mainWindow: BrowserWindow | undefined
+let tray: Tray | undefined
 let harness: HarnessHandle | undefined
 let startup: Promise<void> | undefined
 let launchAbort: AbortController | undefined
@@ -38,18 +43,33 @@ const shutdown = createDesktopShutdown(async () => {
   launchAbort?.abort()
   await startup?.catch(() => {})
   updates?.stop()
+  tray?.destroy()
+  tray = undefined
   const current = harness
   harness = undefined
   await current?.stop()
 }, (code) => { app.exit(code) })
 
+const windowLifecycle = createDesktopWindowLifecycle({
+  getWindow: () => mainWindow,
+  createWindow: () => {
+    if (harness === undefined) throw new Error('Harness is not ready')
+    return createMainWindow(harness.url)
+  },
+  isQuitting: () => shutdown.active,
+})
+
+/** Unhide the macOS application before restoring its BrowserWindow. */
+function showMainWindow(): void {
+  if (process.platform === 'darwin') app.show()
+  windowLifecycle.showWindow()
+}
+
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
   app.on('second-instance', () => {
-    if (mainWindow === undefined && harness !== undefined) createMainWindow(harness.url)
-    mainWindow?.restore()
-    mainWindow?.focus()
+    if (harness !== undefined) showMainWindow()
   })
 
   app.on('before-quit', (event) => {
@@ -57,11 +77,11 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.on('activate', () => {
-    if (mainWindow === undefined && harness !== undefined) createMainWindow(harness.url)
+    if (harness !== undefined) showMainWindow()
   })
 
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
+    // The system tray and supervised Harness own app lifetime on every platform.
   })
 
   void app.whenReady().then(() => {
@@ -117,11 +137,12 @@ async function startDesktop(): Promise<void> {
     void shutdown.request(1)
   })
   createMainWindow(current.url)
+  installTray()
   updates.start()
 }
 
 /** Create the single desktop window with no Node or arbitrary-navigation access. */
-function createMainWindow(harnessOrigin: string): void {
+function createMainWindow(harnessOrigin: string): BrowserWindow {
   const window = new BrowserWindow({
     title: PRODUCT_NAME,
     width: 1440,
@@ -139,7 +160,12 @@ function createMainWindow(harnessOrigin: string): void {
   })
   mainWindow = window
 
-  window.once('ready-to-show', () => { window.show() })
+  window.once('ready-to-show', () => {
+    if (process.platform === 'darwin') app.show()
+    window.show()
+    window.focus()
+  })
+  window.on('close', (event) => { windowLifecycle.onWindowClose(event) })
   window.on('closed', () => {
     if (mainWindow === window) mainWindow = undefined
   })
@@ -163,6 +189,31 @@ function createMainWindow(harnessOrigin: string): void {
     const message = error instanceof Error ? error.message : String(error)
     dialog.showErrorBox(`${PRODUCT_NAME} could not load`, message)
   })
+  return window
+}
+
+/** Install a persistent system tray backed by the official Harness favicon. */
+function installTray(): void {
+  if (tray !== undefined) return
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, 'desktop', 'tray-icon.png')
+    : join(app.getAppPath(), 'build', 'tray-icon.png')
+  let icon = nativeImage.createFromPath(iconPath)
+  if (icon.isEmpty()) throw new Error(`desktop tray icon is missing: ${iconPath}`)
+  if (process.platform === 'darwin') {
+    icon = icon.resize({ width: 18, height: 18 })
+    icon.setTemplateImage(true)
+  }
+  const current = new Tray(icon)
+  tray = current
+  current.setToolTip(PRODUCT_NAME)
+  current.setContextMenu(Menu.buildFromTemplate(desktopTrayTemplate(app.getLocale(), {
+    showWindow: showMainWindow,
+    checkForUpdates: () => updates?.check(true),
+    openExternal: url => shell.openExternal(url),
+    quit: () => shutdown.request(0),
+  })))
+  current.on('click', showMainWindow)
 }
 
 /** Install a native macOS application menu without exposing privileged IPC. */

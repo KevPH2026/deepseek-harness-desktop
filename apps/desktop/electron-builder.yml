@@ -25,6 +25,8 @@ files:
 # the staged legal surface explicitly after the app file matcher runs so the
 # packaged README links and the media package's full language set stay intact.
 extraResources:
+  - from: build/tray-icon.png
+    to: desktop/tray-icon.png
   - from: .stage/LICENSE
     to: app/LICENSE
   - from: .stage/THIRD_PARTY_NOTICES.md
