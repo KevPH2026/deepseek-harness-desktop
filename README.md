@@ -17,6 +17,17 @@ English | [中文](README.zh.md)
 
 ![DeepSeek Harness Desktop product tour: workspace, multimodal tools, plugin discovery, and community](docs/user/marketing/deepseek-harness-desktop-tour.en.gif)
 
+> [!TIP]
+>
+> 🌐 Product site: **[deepseeklab.org](https://deepseeklab.org)** — feature tour, skins showcase, and the WeChat community group (QR code below).
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/user/marketing/desktop-theme-center.png" alt="Built-in skins: Deep Sea Blue, Aurora Night, Warm Paper" loading="lazy"></td>
+    <td width="50%"><img src="docs/user/marketing/desktop-telegram-remote.png" alt="Telegram remote control settings with proxy support" loading="lazy"></td>
+  </tr>
+</table>
+
 > [!IMPORTANT]
 >
 > DeepSeek Harness Desktop is an **unofficial community edition** maintained by [@KevPH2026](https://github.com/KevPH2026). It is based on the open-source [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) project and is not an official DeepSeek desktop product or endorsement.
@@ -62,6 +73,15 @@ DeepSeek Harness already provides a capable plugin-based agent harness. This com
 - The Mac stays on `127.0.0.1`: Telegram uses outbound long polling and never turns the Harness Web API into a public server.
 - Phone tasks use the dedicated `telegram-safe` Agent preset: plain-text reasoning and `web_search` only. Local files, Shell, code execution, credentials, settings, approvals, paid media tools, subagents, workflows, and raw RPC are unavailable.
 - A monotonic execution guard enforces that capability boundary even if another Host plugin later registers a new tool. Telegram cannot change the preset or permission.
+
+### One-click curated community pack
+
+- The marketplace ships a curated, one-click bundle from [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) by **@linxin666** (Apache-2.0): git graph, the right-side file/change panel, skin center with extra skins, image understanding, the liangshen preset, and the whale pet.
+- Installed through the official profile mechanism after an explicit risk acknowledgement; removable with one click. SSH ops, the task board, the community-plugin center, mobile remote, and live token estimation are deliberately excluded, and arbitrary marketplace installation remains fail-closed.
+
+### Clickable usage panel
+
+- The composer stats strip expands into a full usage panel: uncached input, cache-read, cache-write, output, billed input, total tokens, cache-hit rate, context occupancy, and speed metrics — all from durable provider-reported accounting, never estimates.
 
 ### Community plugin marketplace
 
@@ -119,6 +139,11 @@ See the [desktop build and security guide](apps/desktop/README.md) before distri
 
 ## Feedback and community
 
+- 🌐 Product site with the full feature tour: [deepseeklab.org](https://deepseeklab.org)
+- 💬 WeChat community group (scan to join, new releases and tips land here first):
+
+  <img src="docs/user/marketing/community-wechat-group.jpg" width="220" alt="WeChat community group QR code">
+
 - Found a bug or have a feature request? [Open a feedback issue](https://github.com/KevPH2026/deepseek-harness-desktop/issues/new/choose).
 - Building a Harness plugin? Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic and follow the [plugin publishing guide](docs/user/develop/basic/publish.md).
 - Want to list a provider offer or discuss a real partnership? Use the dedicated provider application template after the repository launches.
@@ -129,6 +154,8 @@ See the [desktop build and security guide](apps/desktop/README.md) before distri
 The desktop edition is in beta and the upstream Harness remains in developer preview. Compatibility-breaking changes are possible. The initial packaged target is macOS on Apple Silicon; other platforms need separate packaging and runtime verification before they are advertised as supported.
 
 ## Attribution and license
+
+The curated community pack integrates [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) by **@zhu1090093659 (@linxin666)**, Apache-2.0 — deep thanks to the author for the outstanding plugin collection.
 
 DeepSeek Harness retains its original `Copyright (c) 2026 DeepSeek` notice. The desktop wrapper and community additions are maintained by [@KevPH2026](https://github.com/KevPH2026) under the upstream [MIT License](LICENSE). Bundled dependency licenses are listed in [Third-Party Notices](THIRD_PARTY_NOTICES.md).
 

@@ -23,3 +23,84 @@
   color: var(--dsw-alias-separator-primary);
   margin: 0 10px; /* carries the former flex gap */
 }
+
+/* Click-to-expand usage detail card, anchored above the stats strip. */
+.root {
+  position: relative;
+}
+
+.root[role="button"] {
+  cursor: pointer;
+}
+
+.root[role="button"]::after {
+  content: '▴';
+  margin-left: 4px;
+  opacity: 0.6;
+  font-size: 10px;
+}
+
+.root[data-detail-open="true"]::after {
+  content: '▾';
+}
+
+.detail {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 280px;
+  max-width: 360px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--dsh-color-border, rgba(128, 140, 170, 0.35));
+  background: var(--dsh-color-surface-raised, #111a2c);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  font-size: 12px;
+  text-align: start;
+}
+
+.detailTitle {
+  font-size: 13px;
+}
+
+.detailScope {
+  opacity: 0.65;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  margin: 2px 0;
+}
+
+.detailGrid > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.detailGrid dt {
+  opacity: 0.65;
+}
+
+.detailGrid dd {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.detailEmphasis dd {
+  font-weight: 800;
+}
+
+.detailRow {
+  margin: 0;
+}
+
+.detailRow strong {
+  font-variant-numeric: tabular-nums;
+}

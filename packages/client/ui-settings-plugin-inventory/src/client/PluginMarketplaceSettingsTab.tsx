@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   PluginMarketplaceCatalogSnapshot,
+  PluginMarketplaceConfirmationId,
   PluginMarketplaceCategory,
+  PluginMarketplaceCuratedBundleResult,
+  PluginMarketplaceCuratedBundleStatus,
+  PluginMarketplaceConfirmImportResult,
+  PluginMarketplacePrepareImportResult,
   PluginMarketplaceResources,
   PluginMarketplaceValidateCatalogItemResult,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import {
+  Button,
+  Modal,
   IconCheckOutline16,
   IconCodeOutline16,
   IconCopyOutline16,
@@ -30,6 +37,11 @@ export interface PluginMarketplaceSettingsTabInjected {
   }) => Promise<PluginMarketplaceCatalogSnapshot>
   resources: () => Promise<PluginMarketplaceResources>
   validateCatalogItem: (itemId: string) => Promise<PluginMarketplaceValidateCatalogItemResult>
+  curatedBundleStatus: () => Promise<PluginMarketplaceCuratedBundleStatus>
+  installCuratedBundle: (acknowledgedRisk: boolean) => Promise<PluginMarketplaceCuratedBundleResult>
+  uninstallCuratedBundle: () => Promise<PluginMarketplaceCuratedBundleResult>
+  prepareImport: (itemId: string) => Promise<unknown>
+  confirmImport: (confirmationId: PluginMarketplaceConfirmationId) => Promise<unknown>
 }
 
 /** Full props assembled by the Settings slot renderer. */
@@ -123,8 +135,33 @@ export function PluginMarketplaceSettingsTab({
   catalog,
   resources,
   validateCatalogItem,
+  curatedBundleStatus,
+  installCuratedBundle,
+  uninstallCuratedBundle,
+  prepareImport,
+  confirmImport,
   t,
 }: PluginMarketplaceSettingsTabProps): ReactNode {
+  const [curated, setCurated] = useState<
+    | { readonly phase: 'loading' }
+    | { readonly phase: 'ready'; readonly status: PluginMarketplaceCuratedBundleStatus }
+    | { readonly phase: 'busy' }
+    | {
+      readonly phase: 'done'
+      readonly ok: boolean
+      readonly installed: boolean
+      readonly detail?: string
+    }
+  >({ phase: 'loading' })
+  const [curatedAcknowledged, setCuratedAcknowledged] = useState(false)
+  const [importPreview, setImportPreview] = useState<
+    | { readonly kind: 'idle' }
+    | { readonly kind: 'preparing' }
+    | { readonly kind: 'preview'; readonly preview: Extract<PluginMarketplacePrepareImportResult, { ok: true }>['value'] }
+    | { readonly kind: 'installing'; readonly confirmationId: string; readonly sourceRef: string }
+    | { readonly kind: 'done'; readonly ok: boolean; readonly sourceRef: string; readonly tail: string }
+  >({ kind: 'idle' })
+  const [importAcknowledged, setImportAcknowledged] = useState(false)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<PluginMarketplaceCategory>('design')
   const [refresh, setRefresh] = useState(0)
@@ -139,6 +176,37 @@ export function PluginMarketplaceSettingsTab({
     readonly path: string
     readonly status: 'copied' | 'error'
   }>()
+
+  useEffect(() => {
+    let current = true
+    void curatedBundleStatus().then(
+      (status) => { if (current) setCurated({ phase: 'ready', status }) },
+      () => { if (current) setCurated({ phase: 'ready', status: { package: '', installed: false, version: undefined } }) },
+    )
+    return () => { current = false }
+  }, [curatedBundleStatus])
+
+  const runCurated = (operation: 'install' | 'uninstall'): void => {
+    if (curated.phase === 'busy') return
+    setCurated({ phase: 'busy' })
+    const request = operation === 'install'
+      ? installCuratedBundle(curatedAcknowledged)
+      : uninstallCuratedBundle()
+    void request.then(
+      (result) => {
+        setCuratedAcknowledged(false)
+        setCurated({
+          phase: 'done',
+          ok: result.ok,
+          installed: result.installed,
+          ...(result.detail === undefined ? {} : { detail: result.detail }),
+        })
+      },
+      () => {
+        setCurated({ phase: 'done', ok: false, installed: curated.phase === 'ready' ? curated.status.installed : false })
+      },
+    )
+  }
 
   useEffect(() => {
     let current = true
@@ -201,6 +269,56 @@ export function PluginMarketplaceSettingsTab({
     )
   }
 
+  const startImport = (item: CatalogItem): void => {
+    setImportAcknowledged(false)
+    setImportPreview({ kind: 'preparing' })
+    void prepareImport(item.id).then(
+      (raw: unknown) => {
+        const result = raw as PluginMarketplacePrepareImportResult
+        if (!result.ok) {
+          setImportPreview({ kind: 'idle' })
+          return
+        }
+        setImportPreview({ kind: 'preview', preview: result.value })
+      },
+      () => { setImportPreview({ kind: 'idle' }) },
+    )
+  }
+
+  const runConfirmImport = (): void => {
+    if (importPreview.kind !== 'preview') return
+    const { confirmationId, sourceRef } = importPreview.preview
+    setImportPreview({ kind: 'installing', confirmationId, sourceRef })
+    void confirmImport(confirmationId).then(
+      (raw: unknown) => {
+        const result = raw as PluginMarketplaceConfirmImportResult
+        if (result.ok) {
+          setImportPreview({
+            kind: 'done',
+            ok: true,
+            sourceRef: result.value.sourceRef,
+            tail: result.value.stdoutTail,
+          })
+        } else {
+          setImportPreview({
+            kind: 'done',
+            ok: false,
+            sourceRef,
+            tail: result.error.message,
+          })
+        }
+      },
+      () => {
+        setImportPreview({ kind: 'done', ok: false, sourceRef, tail: '' })
+      },
+    )
+  }
+
+  const cancelImport = (): void => {
+    setImportPreview({ kind: 'idle' })
+    setImportAcknowledged(false)
+  }
+
   const copyTemplateFile = (
     file: PluginMarketplaceResources['template']['files'][number],
   ): void => {
@@ -224,6 +342,77 @@ export function PluginMarketplaceSettingsTab({
           </a>
         ) : null}
       </div>
+
+      <section className={css.custom} aria-labelledby="curated-bundle-title">
+        <div className={css.sectionHeading}>
+          <h4 id="curated-bundle-title">{t('curatedTitle')}</h4>
+          <p>{t('curatedDescription')}</p>
+        </div>
+        {curated.phase === 'loading' ? <p className={css.status}>{t('curatedChecking')}</p> : (
+          <>
+            <p className={css.quickConfig}>
+              {curated.phase === 'ready'
+                ? (curated.status.installed
+                  ? (curated.status.version === undefined
+                    ? t('curatedInstalled')
+                    : `${t('curatedInstalled')} · v${curated.status.version}`)
+                  : t('curatedNotInstalled'))
+                : curated.phase === 'busy'
+                  ? t('curatedBusy')
+                  : curated.installed
+                    ? t('curatedInstalled')
+                    : t('curatedNotInstalled')}
+            </p>
+            {curated.phase === 'done' && curated.ok ? (
+              <p className={css.status} role="status">{t('curatedRestartRequired')}</p>
+            ) : null}
+            {curated.phase === 'done' && !curated.ok ? (
+              <p className={css.validationError} role="alert">
+                {t('curatedFailed')}
+                {curated.detail === undefined ? '' : `: ${curated.detail}`}
+              </p>
+            ) : null}
+            {curated.phase !== 'ready' || !curated.status.installed ? (
+              <label className={css.customForm}>
+                <input
+                  type="checkbox"
+                  checked={curatedAcknowledged}
+                  disabled={curated.phase === 'busy'}
+                  onChange={(event) => { setCuratedAcknowledged(event.currentTarget.checked) }}
+                />
+                <span>{t('curatedAcknowledge')}</span>
+              </label>
+            ) : null}
+            <div className={css.cardHead}>
+              {curated.phase === 'ready' && curated.status.installed ? (
+                <button
+                  type="button"
+                  disabled={false}
+                  onClick={() => { runCurated('uninstall') }}
+                >
+                  {t('curatedUninstall')}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={curated.phase !== 'ready' || !curatedAcknowledged}
+                  onClick={() => { runCurated('install') }}
+                >
+                  {curated.phase === 'busy' ? t('curatedBusyAction') : t('curatedInstall')}
+                </button>
+              )}
+              <a
+                className={css.sourceLink}
+                href="https://github.com/zhu1090093659/dsh-web-ui"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('curatedSource')}
+              </a>
+            </div>
+          </>
+        )}
+      </section>
 
       {warning !== undefined ? <p className={css.catalogWarning} role="status">{t(warning)}</p> : null}
       {validationError !== undefined ? <p className={css.validationError} role="alert">{validationError}</p> : null}
@@ -284,7 +473,13 @@ export function PluginMarketplaceSettingsTab({
                     {validatingId === item.id ? t('marketValidating') : t('marketValidate')}
                   </button>
                 ) : (
-                  <button className={css.disabledImport} type="button" disabled title={t('marketInstallDisabled')}>
+                  <button
+                    className={css.importButton}
+                    type="button"
+                    disabled={item.installability !== 'validated'}
+                    onClick={() => { startImport(item) }}
+                    title={item.installability !== 'validated' ? t('marketImportInvalid') : t('marketImportReady')}
+                  >
                     <IconDownloadOutline16 aria-hidden="true" />
                     {item.installability === 'validated' ? t('marketImportReady') : t('marketImportInvalid')}
                   </button>
@@ -331,6 +526,78 @@ export function PluginMarketplaceSettingsTab({
           ))}
         </ul>
       ) : null}
+
+      <Modal
+        open={importPreview.kind === 'preview' || importPreview.kind === 'installing'}
+        onClose={cancelImport}
+        closeLabel={t('close')}
+        title={t('marketImportConfirmTitle')}
+        description={t('marketImportConfirmIntro')}
+        footer={importPreview.kind === 'preview' ? (
+          <>
+            <Button variant="outline" onClick={cancelImport}>{t('marketImportCancel')}</Button>
+            <Button
+              variant="primary"
+              disabled={!importAcknowledged}
+              onClick={() => { runConfirmImport() }}
+            >
+              {t('marketImportConfirmAction')}
+            </Button>
+          </>
+        ) : (
+          <Button variant="outline" onClick={cancelImport} disabled>{t('marketImportRunning')}</Button>
+        )}
+      >
+        {importPreview.kind === 'preview' ? (
+          <div className={css.importPreview}>
+            <pre><code>{importPreview.preview.command.args.join(' ')}</code></pre>
+            <p className={css.importSource}>
+              {t('marketImportConfirmSource')}: <code>{importPreview.preview.sourceRef}</code>
+            </p>
+            <a
+              className={css.importSourceLink}
+              href={`https://github.com/search?q=${encodeURIComponent(importPreview.preview.sourceRef)}&type=repositories`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('marketImportConfirmSearch')}
+            </a>
+            <ul className={css.importRisks}>
+              {importPreview.preview.risks.map((risk, i) => (<li key={i}>{risk}</li>))}
+            </ul>
+            <label className={css.importConfirmRow}>
+              <input
+                type="checkbox"
+                checked={importAcknowledged}
+                onChange={(event) => { setImportAcknowledged(event.currentTarget.checked) }}
+              />
+              <span>{t('marketImportAcknowledge')}</span>
+            </label>
+          </div>
+        ) : null}
+        {importPreview.kind === 'installing' ? (
+          <p className={css.importStatus}>{t('marketImportRunningBody', { ref: importPreview.sourceRef })}</p>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={importPreview.kind === 'done'}
+        onClose={cancelImport}
+        closeLabel={t('close')}
+        title={importPreview.kind === 'done' && importPreview.ok ? t('marketImportSuccessTitle') : t('marketImportFailureTitle')}
+        description={importPreview.kind === 'done' && importPreview.ok
+          ? t('marketImportSuccessBody', { ref: importPreview.sourceRef })
+          : importPreview.kind === 'done'
+            ? t('marketImportFailureBody', { ref: importPreview.sourceRef })
+            : ''}
+        footer={(
+          <Button variant="primary" onClick={cancelImport}>{t('close')}</Button>
+        )}
+      >
+        {importPreview.kind === 'done' && importPreview.tail !== '' ? (
+          <pre className={css.importTail}><code>{importPreview.tail}</code></pre>
+        ) : null}
+      </Modal>
 
       {showOffers ? (
         <>

@@ -303,3 +303,49 @@ export interface PluginMarketplaceResources {
     readonly files: readonly PluginMarketplaceTemplateFile[]
   }
 }
+
+/**
+ * Status of the curated community bundle the desktop exposes as a one-click
+ * integration. Curated means: fixed package name, pinned known build scripts,
+ * and a single integration surface — it never widens into arbitrary plugin
+ * installation, which remains fail-closed.
+ */
+export interface PluginMarketplaceCuratedBundleStatus {
+  /** npm package name of the curated aggregate bundle. */
+  readonly package: string
+  /** Whether the bundle is present in the web profile's dependencies. */
+  readonly installed: boolean
+  /** Installed version from the profile's node_modules manifest, when present. */
+  readonly version?: string | undefined
+}
+
+/** Stable curated-bundle failures rendered by the local marketplace UI. */
+export type PluginMarketplaceCuratedBundleErrorCode =
+  | 'acknowledgement-required'
+  | 'cli-unavailable'
+  | 'operation-in-progress'
+  | 'install-failed'
+  | 'uninstall-failed'
+
+/** Request to install the curated bundle after its third-party risk notice. */
+export interface PluginMarketplaceInstallCuratedBundleRequest {
+  /** Must be true; the UI collects it from an explicit acknowledgement control. */
+  readonly acknowledgedRisk: boolean
+}
+
+/**
+ * Plain (non-union) result so the generated remote schema stays simple; the
+ * UI branches on `ok` and maps `errorCode` to localized copy.
+ */
+export interface PluginMarketplaceCuratedBundleResult {
+  /** Whether the requested operation completed. */
+  readonly ok: boolean
+  /** Bundle presence after the operation attempt. */
+  readonly installed: boolean
+  /** True when the web profile changed and the app must restart to apply it. */
+  readonly requiresRestart: boolean
+  /** Stable failure category; undefined on success. */
+  readonly errorCode?: PluginMarketplaceCuratedBundleErrorCode | undefined
+  /** Sanitized CLI output tail for the error UI; undefined on success. */
+  readonly detail?: string | undefined
+}

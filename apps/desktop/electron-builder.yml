@@ -87,7 +87,7 @@ mac:
   # Apple bundle versions remain numeric while package.json and the updater
   # feed retain the full prerelease SemVer (0.1.0-beta.2).
   bundleShortVersion: '0.1.0'
-  bundleVersion: '2'
+  bundleVersion: '3'
   extendInfo:
     NSAppTransportSecurity:
       NSAllowsArbitraryLoads: false

@@ -205,6 +205,36 @@ describe('StatsLine', () => {
     expect(emptyView.container.textContent).toBe('')
   })
 
+  it('expands the usage detail card on click and collapses it again', () => {
+    const { source } = makeSource({ nodes: [assistant(1, 1)] })
+    const view = render(<StatsLine {...props(source)} />)
+    const row = view.container.querySelector('[role="button"]')!
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+    expect(view.container.querySelector('[role="dialog"]')).toBeNull()
+    fireEvent.click(row)
+    const dialog = view.container.querySelector('[role="dialog"]')!
+    expect(row.getAttribute('aria-expanded')).toBe('true')
+    expect(dialog.textContent).toContain('Usage stats')
+    expect(dialog.textContent).toContain('Uncached input')
+    expect(dialog.textContent).toContain('Cache-read')
+    expect(dialog.textContent).toContain('Cache-write')
+    expect(dialog.textContent).toContain('Output')
+    expect(dialog.textContent).toContain('105')
+    fireEvent.click(row)
+    expect(view.container.querySelector('[role="dialog"]')).toBeNull()
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('keeps a session without billable activity non-interactive', () => {
+    const empty = makeSource()
+    const view = render(<StatsLine {...props(empty.source, {
+      tokenUsage: { uncachedInputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      contextPressure: {},
+    })} />)
+    // counts exist (a turn happened) but nothing billable; the row stays plain text
+    expect(view.container.querySelector('[role="button"]')).toBeNull()
+  })
+
   it('reveals the full line in a delayed hover tooltip only while the row is clipped', () => {
     vi.useFakeTimers()
     // jsdom lays nothing out; fake a row narrower than its content.

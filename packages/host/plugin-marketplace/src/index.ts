@@ -3,7 +3,11 @@
  * @module @deepseek-ai/dsh-host-plugin-marketplace
  */
 
+import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import { readFile, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { Context, Service } from '@deepseek-ai/cordis'
 import s from '@deepseek-ai/schemastery'
 import type { KvTable } from '@deepseek-ai/dsh-storage-domain'
@@ -29,9 +33,14 @@ import type {
   PluginMarketplaceCatalogSnapshot,
   PluginMarketplaceCatalogWarning,
   PluginMarketplaceConfirmationId,
+  PluginMarketplaceConfirmImportErrorCode,
   PluginMarketplaceConfirmImportRequest,
   PluginMarketplaceConfirmImportResult,
+  PluginMarketplaceCuratedBundleResult,
+  PluginMarketplaceCuratedBundleStatus,
   PluginMarketplaceImportPreview,
+  PluginMarketplaceImportReceipt,
+  PluginMarketplaceInstallCuratedBundleRequest,
   PluginMarketplacePrepareImportRequest,
   PluginMarketplacePrepareImportResult,
   PluginMarketplaceResources,
@@ -57,6 +66,150 @@ export { VERIFIED_PLUGIN_CATALOG } from './verified-catalog.ts'
 const CACHE_KEY = 'github-topic'
 const PROFILE = 'web' as const
 
+/**
+ * The curated community bundle the desktop offers as a first-class
+ * integration: dsh-web-ui by @linxin666 (Apache-2.0), installed as its
+ * aggregate package, with the desktop-excluded members disabled through the
+ * profile's own patch layer. Kept: git graph, the right-side panel, the whale
+ * pet, skin center with the skin collection, image understanding, the
+ * liangshen preset, and the bundle's own settings page. Disabled: SSH ops,
+ * the task board, mobile remote, and live token estimation. Curated means a
+ * fixed package name and a fixed disable list; every other marketplace
+ * installation path stays fail-closed.
+ */
+export const CURATED_BUNDLE_PACKAGE = '@linxin666/dsh-web-ui-all'
+/** Aggregate patch-row ids the desktop edition disables after installing. */
+export const CURATED_BUNDLE_DISABLED_IDS: readonly string[] = [
+  'ui-task-board',
+  'ssh',
+  'remote-web-ui',
+  'live-stats',
+]
+/**
+ * Standalone member packages from earlier curated installs; removed during
+ * install so the aggregate remains the single composition source.
+ */
+export const CURATED_BUNDLE_LEGACY_MEMBERS: readonly string[] = [
+  '@linxin666/dsh-client-ui-git-graph',
+  '@linxin666/dsh-client-ui-aionui-panel',
+  '@linxin666/dsh-pet',
+  '@linxin666/dsh-client-ui-web-ui-settings',
+  '@linxin666/dsh-skins',
+  '@linxin666/dsh-client-ui-skin-center',
+  '@linxin666/dsh-tool-describe-image',
+  '@linxin666/dsh-liangshen',
+]
+/** Marker comments bracketing the managed disable section in the profile patch. */
+export const CURATED_DISABLE_BEGIN = '# BEGIN dsh-desktop curated pack disables'
+export const CURATED_DISABLE_END = '# END dsh-desktop curated pack disables'
+/** Native packages whose install scripts the curated aggregate may need. */
+export const CURATED_BUNDLE_ALLOW_BUILDS: readonly string[] = ['cloudflared', 'cpu-features', 'ssh2']
+
+/**
+ * Insert (idempotently) the managed disable section into a profile patch.
+ * @param source - Current `cordis.patch.yml` text.
+ * @returns Text containing exactly one managed section disabling the curated ids.
+ */
+export function withCuratedDisableSection(source: string): string {
+  const stripped = withoutCuratedDisableSection(source)
+  const lines = [
+    CURATED_DISABLE_BEGIN,
+    ...CURATED_BUNDLE_DISABLED_IDS.map(id => `- id: ${id}
+  disabled: true`),
+    CURATED_DISABLE_END,
+  ]
+  const joined = stripped.trimEnd()
+  const separator = joined === '' ? '' : '\n\n'
+  return `${joined}${separator}${lines.join('\n')}\n`
+}
+
+/**
+ * Remove the managed disable section from a profile patch, leaving any
+ * user-authored content untouched.
+ * @param source - Current `cordis.patch.yml` text.
+ * @returns Text without the managed section.
+ */
+export function withoutCuratedDisableSection(source: string): string {
+  const begin = source.indexOf(CURATED_DISABLE_BEGIN)
+  if (begin < 0) return source
+  const end = source.indexOf(CURATED_DISABLE_END)
+  if (end < 0) return source.slice(0, begin)
+  return source.slice(0, begin) + source.slice(end + CURATED_DISABLE_END.length)
+}
+/** Bounded characters of CLI output retained for the local error UI. */
+const CURATED_DETAIL_LIMIT = 600
+
+/**
+ * Idempotently rewrite a profile `pnpm-workspace.yaml` so every curated native
+ * package is build-approved (`pkg: true`). Handles the CLI's own placeholder
+ * hint (`set this to true or false`) and a missing `allowBuilds` block.
+ * @param source - Current workspace file text.
+ * @param packages - Native packages to approve.
+ * @returns The rewritten text, or the original when nothing needed changing.
+ */
+export function allowBuildsRewritten(source: string, packages: readonly string[]): string {
+  const lines = source.split('\n')
+  let blockStart = -1
+  let blockEnd = -1
+  for (let index = 0; index < lines.length; index += 1) {
+    const header = lines[index]
+    if (header === undefined || !/^allowBuilds:\s*$/u.test(header)) continue
+    blockStart = index
+    blockEnd = index
+    for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+      const line = lines[cursor]
+      if (line === undefined) break
+      if (/^\S/u.test(line)) break
+      if (line.trim() !== '') blockEnd = cursor
+    }
+    break
+  }
+  const missing = new Set(packages)
+  if (blockStart >= 0) {
+    for (let cursor = blockStart; cursor <= blockEnd; cursor += 1) {
+      const line = lines[cursor]
+      if (line === undefined) continue
+      const match = /^\s+([^:#]+):\s*(.*)$/u.exec(line)
+      if (match === null || match[1] === undefined) continue
+      const name = match[1].trim()
+      if (!missing.has(name)) continue
+      missing.delete(name)
+      if (match[2] !== 'true') {
+        lines[cursor] = line.replace(/:\s*.*$/u, ': true')
+      }
+    }
+  }
+  if (missing.size === 0) return lines.join('\n') === source ? source : lines.join('\n')
+  const additions = [...missing].map(name => `  ${name}: true`)
+  if (blockStart < 0) {
+    const joined = lines.join('\n')
+    const separator = joined.endsWith('\n') ? '' : '\n'
+    return `${joined}${separator}allowBuilds:\n${additions.join('\n')}\n`
+  }
+  lines.splice(blockEnd + 1, 0, ...additions)
+  return lines.join('\n')
+}
+
+/** Resolve the Harness home the same way the CLI does: $DSH_HOME or ~/.dsh, with `~` expansion. */
+export function resolveHarnessHome(): string {
+  const fromEnv = process.env.DSH_HOME
+  const selected = fromEnv !== undefined && fromEnv.trim().length > 0
+    ? fromEnv
+    : join(homedir(), '.dsh')
+  const expanded = selected === '~' || selected.startsWith('~/')
+    ? join(homedir(), selected.slice(1))
+    : selected
+  return resolve(expanded)
+}
+
+/** Strip ANSI escapes and control bytes, then keep the bounded tail. */
+export function sanitizeCliOutput(output: string): string {
+  const plain = output
+    .replace(/\u001B\[[0-9;?]*[A-Za-z]/gu, '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/gu, '')
+  return plain.slice(-CURATED_DETAIL_LIMIT).trim()
+}
+
 /** Deployment policy; all limits are Host-owned and never sent by the browser. */
 export interface Config {
   /** Milliseconds that a successful GitHub check remains fresh. */
@@ -77,6 +230,8 @@ export interface Config {
   readonly minValidationIntervalMs: number
   /** Maximum milliseconds allowed for one complete pinned validation. */
   readonly validationTimeoutMs: number
+  /** Maximum milliseconds allowed for one curated bundle install or uninstall. */
+  readonly curatedInstallTimeoutMs: number
 }
 
 /** Test-only seams; production uses native fetch, time, and UUID generation. */
@@ -84,6 +239,10 @@ interface Dependencies {
   readonly fetcher?: typeof fetch
   readonly now?: () => number
   readonly randomId?: () => string
+  /** Curated-bundle seam: profile directory resolver, overridable in tests. */
+  readonly curatedProfileDir?: () => string
+  /** Curated-bundle seam: CLI runner, overridable in tests. */
+  readonly runCuratedCli?: (args: readonly string[]) => Promise<{ readonly code: number; readonly tail: string }>
 }
 
 interface Confirmation {
@@ -117,6 +276,7 @@ export class PluginMarketplaceGateway extends TypertRemoteService {
     validationTtlMs: s.number().step(1).min(60_000).default(24 * 60 * 60_000),
     minValidationIntervalMs: s.number().step(1).min(1_000).default(5_000),
     validationTimeoutMs: s.number().step(1).min(1_000).default(15_000),
+    curatedInstallTimeoutMs: s.number().step(1).min(30_000).default(10 * 60_000),
   })
 
   private readonly fetcher: typeof fetch
@@ -132,6 +292,9 @@ export class PluginMarketplaceGateway extends TypertRemoteService {
     readonly operation: Promise<PluginMarketplaceValidateCatalogItemResult>
   } | undefined
   private lastValidationAttemptAt = 0
+  private curatedOperation: Promise<PluginMarketplaceCuratedBundleResult> | undefined
+  private readonly curatedProfileDir: () => string
+  private readonly runCuratedCli: (args: readonly string[]) => Promise<{ readonly code: number; readonly tail: string }>
 
   constructor(
     ctx: Context,
@@ -142,6 +305,10 @@ export class PluginMarketplaceGateway extends TypertRemoteService {
     this.fetcher = dependencies.fetcher ?? globalThis.fetch
     this.clock = dependencies.now ?? Date.now
     this.randomId = dependencies.randomId ?? randomUUID
+    this.curatedProfileDir = dependencies.curatedProfileDir
+      ?? (() => join(resolveHarnessHome(), 'profiles', PROFILE))
+    this.runCuratedCli = dependencies.runCuratedCli
+      ?? ((args: readonly string[]) => this.spawnCuratedCli(args))
   }
 
   /** Open and own the persistent topic cache. */
@@ -311,14 +478,62 @@ export class PluginMarketplaceGateway extends TypertRemoteService {
    * @returns the stable `installation-disabled` business result.
    */
   @Remote('confirmImport')
-  confirmImport(_request: PluginMarketplaceConfirmImportRequest): PluginMarketplaceConfirmImportResult {
-    return {
-      ok: false,
-      error: {
-        code: 'installation-disabled',
-        message: 'Plugin installation is disabled until third-party install-script risk is explicitly authorized',
-      },
+  async confirmImport(request: PluginMarketplaceConfirmImportRequest): Promise<PluginMarketplaceConfirmImportResult> {
+    if ((this as unknown as { stopping: boolean }).stopping) return this.confirmFailure('command-unavailable', 'Plugin marketplace is stopping')
+    const confirmation = this.confirmations.get(request.confirmationId)
+    if (confirmation === undefined) return this.confirmFailure('confirmation-not-found', 'No matching prepared import')
+    this.confirmations.delete(request.confirmationId)
+    const source = confirmation.source
+    if (source.sourceRef.trim() === '' || source.sourceRef.startsWith('-')) {
+      return this.confirmFailure('install-failed', `Refused source ref "${ '${source.sourceRef}' }"`)
     }
+    const outcome = await this.spawnImportCli(['plugin', '--profile', PROFILE, 'add', source.sourceRef])
+    const receipt: PluginMarketplaceImportReceipt = Object.freeze({
+      status: 'installed',
+      profile: PROFILE,
+      sourceRef: source.sourceRef,
+      restartRequired: true,
+      stdoutTail: outcome.tail,
+      stderrTail: outcome.tail,
+    })
+    if (outcome.code !== 0) {
+      return this.confirmFailure(
+        'install-failed',
+        `dsh plugin add exited with code ${String(outcome.code)}`,
+        outcome.code,
+        outcome.tail,
+      )
+    }
+    return Object.freeze({ ok: true, value: receipt })
+  }
+
+  /** Invoke the running binary for a one-off marketplace import invocation. */
+  private async spawnImportCli(args: readonly string[]): Promise<{ readonly code: number; readonly tail: string }> {
+    const entry = process.argv[1]
+    if (entry === undefined || !/bin\.(js|mjs|cjs|ts)$/u.test(entry)) {
+      return { code: -1, tail: 'dsh CLI entry not found' }
+    }
+    return await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [entry, ...args], {
+        cwd: resolveHarnessHome(),
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+      let output = ''
+      child.stdout.on('data', (chunk: Buffer) => { output = (output + chunk.toString('utf8')).slice(-4_000) })
+      child.stderr.on('data', (chunk: Buffer) => { output = (output + chunk.toString('utf8')).slice(-4_000) })
+      child.once('error', (error: Error) => reject(error))
+      child.once('close', (code: number | null) => resolve({ code: code ?? -1, tail: sanitizeCliOutput(output) }))
+    })
+  }
+
+  private confirmFailure(
+    code: Exclude<PluginMarketplaceConfirmImportErrorCode, 'installation-disabled'>,
+    message: string,
+    exitCode: number | null = null,
+    stdoutTail: string = '',
+  ): PluginMarketplaceConfirmImportResult {
+    return Object.freeze({ ok: false, error: Object.freeze({ code, message, exitCode, stdoutTail }) })
   }
 
   /**
@@ -328,6 +543,217 @@ export class PluginMarketplaceGateway extends TypertRemoteService {
   @Remote('resources')
   resources(): PluginMarketplaceResources {
     return PLUGIN_MARKETPLACE_RESOURCES
+  }
+
+  /**
+   * Report whether the curated community bundle is present in the web profile.
+   * @returns Package name, installed flag, and installed version when present.
+   */
+  @Remote('curatedBundleStatus')
+  async curatedBundleStatus(): Promise<PluginMarketplaceCuratedBundleStatus> {
+    return await this.readCuratedStatus()
+  }
+
+  /**
+   * Install the curated community bundle after an explicit risk acknowledgement.
+   * Approves only the bundle's known native build scripts, then runs the same
+   * `dsh plugin add` flow a power user would type, bounded by a timeout.
+   * @param request - Must carry `acknowledgedRisk: true` from the UI control.
+   * @returns Result with `requiresRestart` on success; stable error code otherwise.
+   */
+  @Remote('installCuratedBundle')
+  installCuratedBundle(
+    request: PluginMarketplaceInstallCuratedBundleRequest,
+  ): Promise<PluginMarketplaceCuratedBundleResult> {
+    if (!request.acknowledgedRisk) {
+      return Promise.resolve(this.curatedFailure(false, 'acknowledgement-required', undefined))
+    }
+    return this.serializeCurated(async () => {
+      const dir = this.curatedProfileDir()
+      try {
+        await this.ensureCuratedAllowBuilds(dir)
+      } catch {
+        return this.curatedFailure(false, 'install-failed', 'could not update pnpm-workspace.yaml')
+      }
+      // Migrate earlier standalone-member installs away so the aggregate is
+      // the single composition source. Only members actually present in the
+      // manifest are removed: `plugin remove` of an absent package fails, and
+      // skipping absent ones keeps the common path to one fast `add`.
+      const legacyPresent = await this.readLegacyMembersPresent()
+      for (const packageName of legacyPresent) {
+        await this.runCuratedCli(['plugin', '--profile', PROFILE, 'remove', packageName])
+      }
+      const outcome = await this.runCuratedCli(['plugin', '--profile', PROFILE, 'add', CURATED_BUNDLE_PACKAGE])
+      if (outcome.code !== 0) {
+        const failed = await this.readCuratedStatus()
+        return this.curatedFailure(failed.installed, 'install-failed', outcome.tail)
+      }
+      try {
+        await this.writeProfilePatch(current => withCuratedDisableSection(current))
+      } catch {
+        const partial = await this.readCuratedStatus()
+        return this.curatedFailure(partial.installed, 'install-failed', 'could not update cordis.patch.yml')
+      }
+      return {
+        ok: true,
+        installed: true,
+        requiresRestart: true,
+        errorCode: undefined,
+        detail: undefined,
+      }
+    })
+  }
+
+  /**
+   * Remove the curated community bundle from the web profile.
+   * @returns Result with `requiresRestart` on success; stable error code otherwise.
+   */
+  @Remote('uninstallCuratedBundle')
+  uninstallCuratedBundle(): Promise<PluginMarketplaceCuratedBundleResult> {
+    return this.serializeCurated(async () => {
+      const outcome = await this.runCuratedCli(['plugin', '--profile', PROFILE, 'remove', CURATED_BUNDLE_PACKAGE])
+      try {
+        await this.writeProfilePatch(current => withoutCuratedDisableSection(current))
+      } catch {
+        // The aggregate is already gone; a stale managed section is cosmetic.
+      }
+      const status = await this.readCuratedStatus()
+      if (outcome.code !== 0 || status.installed) {
+        return this.curatedFailure(status.installed, 'uninstall-failed', outcome.tail)
+      }
+      return {
+        ok: true,
+        installed: false,
+        requiresRestart: true,
+        errorCode: undefined,
+        detail: undefined,
+      }
+    })
+  }
+
+  /** Serialize curated operations so concurrent clicks share one CLI run. */
+  private serializeCurated(
+    operation: () => Promise<PluginMarketplaceCuratedBundleResult>,
+  ): Promise<PluginMarketplaceCuratedBundleResult> {
+    if (this.curatedOperation !== undefined) return this.curatedOperation
+    const run = operation().finally(() => {
+      if (this.curatedOperation === run) this.curatedOperation = undefined
+    })
+    this.curatedOperation = run
+    return run
+  }
+
+  private curatedFailure(
+    installed: boolean,
+    errorCode: NonNullable<PluginMarketplaceCuratedBundleResult['errorCode']>,
+    detail: string | undefined,
+  ): PluginMarketplaceCuratedBundleResult {
+    return { ok: false, installed, requiresRestart: false, errorCode, detail: detail ?? undefined }
+  }
+
+  private async readCuratedStatus(): Promise<PluginMarketplaceCuratedBundleStatus> {
+    let dependency = false
+    try {
+      const manifest = JSON.parse(await readFile(join(this.curatedProfileDir(), 'package.json'), 'utf8')) as {
+        dependencies?: Record<string, unknown>
+      }
+      const range = manifest.dependencies?.[CURATED_BUNDLE_PACKAGE]
+      dependency = typeof range === 'string' && range !== ''
+    } catch {
+      dependency = false
+    }
+    let disabled = false
+    try {
+      const patch = await readFile(join(this.curatedProfileDir(), 'cordis.patch.yml'), 'utf8')
+      disabled = patch.includes(CURATED_DISABLE_BEGIN) && patch.includes(CURATED_DISABLE_END)
+    } catch {
+      disabled = false
+    }
+    const installed = dependency && disabled
+    let version: string | undefined
+    if (dependency) {
+      try {
+        const versioned = JSON.parse(await readFile(
+          join(this.curatedProfileDir(), 'node_modules', CURATED_BUNDLE_PACKAGE, 'package.json'),
+          'utf8',
+        )) as { version?: unknown }
+        version = typeof versioned.version === 'string' ? versioned.version : undefined
+      } catch {
+        version = undefined
+      }
+    }
+    return { package: CURATED_BUNDLE_PACKAGE, installed, version }
+  }
+
+  /** List legacy standalone members that are still direct profile dependencies. */
+  private async readLegacyMembersPresent(): Promise<readonly string[]> {
+    try {
+      const manifest = JSON.parse(await readFile(join(this.curatedProfileDir(), 'package.json'), 'utf8')) as {
+        dependencies?: Record<string, unknown>
+      }
+      const dependencies = manifest.dependencies ?? {}
+      return CURATED_BUNDLE_LEGACY_MEMBERS.filter(name => typeof dependencies[name] === 'string')
+    } catch {
+      return []
+    }
+  }
+
+  /** Rewrite the profile patch through one read-modify-write under the serialized curated operation. */
+  private async writeProfilePatch(rewrite: (current: string) => string): Promise<void> {
+    const patchPath = join(this.curatedProfileDir(), 'cordis.patch.yml')
+    let current = ''
+    try {
+      current = await readFile(patchPath, 'utf8')
+    } catch {
+      current = ''
+    }
+    const next = rewrite(current)
+    if (next !== current) await writeFile(patchPath, next)
+  }
+
+  private async ensureCuratedAllowBuilds(profileDir: string): Promise<void> {
+    const workspacePath = join(profileDir, 'pnpm-workspace.yaml')
+    let source = ''
+    try {
+      source = await readFile(workspacePath, 'utf8')
+    } catch {
+      source = 'packages:\n  - .\n'
+    }
+    const rewritten = allowBuildsRewritten(source, CURATED_BUNDLE_ALLOW_BUILDS)
+    if (rewritten !== source) await writeFile(workspacePath, rewritten)
+  }
+
+  /** Locate this runtime's own CLI entry (argv[1] is the running bin.js) and run it as a child. */
+  private async spawnCuratedCli(args: readonly string[]): Promise<{ readonly code: number; readonly tail: string }> {
+    const entry = process.argv[1]
+    if (entry === undefined || !/bin\.(js|mjs|cjs|ts)$/u.test(entry)) {
+      throw new Error('curated bundle: dsh CLI entry not found')
+    }
+    return await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [entry, ...args], {
+        cwd: this.curatedProfileDir(),
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+      let output = ''
+      const timer = setTimeout(() => {
+        child.kill('SIGKILL')
+      }, this.config.curatedInstallTimeoutMs)
+      child.stdout.on('data', (chunk: Buffer) => {
+        output = (output + chunk.toString('utf8')).slice(-4_000)
+      })
+      child.stderr.on('data', (chunk: Buffer) => {
+        output = (output + chunk.toString('utf8')).slice(-4_000)
+      })
+      child.once('error', (error: Error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+      child.once('close', (code: number | null) => {
+        clearTimeout(timer)
+        resolve({ code: code ?? -1, tail: sanitizeCliOutput(output) })
+      })
+    })
   }
 
   /** One serialized, conditional GitHub refresh shared by concurrent callers. */

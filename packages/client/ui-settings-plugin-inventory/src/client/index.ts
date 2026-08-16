@@ -2,6 +2,7 @@
 
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { PluginMarketplaceConfirmationId } from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { PluginInventorySettingsTab, type PluginInventorySettingsTabInjected } from './PluginInventorySettingsTab.tsx'
 import {
@@ -69,6 +70,41 @@ export function apply(ctx: ClientContext): void {
       const result = await ctx.remote.pluginMarketplace.validateCatalogItem({ itemId })
       if (!result.ok) {
         throw new Error(`pluginMarketplace.validateCatalogItem failed: ${result.error.code}: ${result.error.message}`)
+      }
+      return result.value
+    },
+    curatedBundleStatus: async () => {
+      const result = await ctx.remote.pluginMarketplace.curatedBundleStatus()
+      if (!result.ok) {
+        throw new Error('pluginMarketplace.curatedBundleStatus failed')
+      }
+      return result.value
+    },
+    installCuratedBundle: async (acknowledgedRisk) => {
+      const result = await ctx.remote.pluginMarketplace.installCuratedBundle({ acknowledgedRisk })
+      if (!result.ok) {
+        throw new Error('pluginMarketplace.installCuratedBundle failed')
+      }
+      return result.value
+    },
+    uninstallCuratedBundle: async () => {
+      const result = await ctx.remote.pluginMarketplace.uninstallCuratedBundle()
+      if (!result.ok) {
+        throw new Error('pluginMarketplace.uninstallCuratedBundle failed')
+      }
+      return result.value
+    },
+    prepareImport: async (itemId) => {
+      const result = await ctx.remote.pluginMarketplace.prepareImport({ source: { kind: 'catalog', itemId } })
+      if (!result.ok) {
+        throw new Error(`pluginMarketplace.prepareImport failed: ${result.error.code}: ${result.error.message}`)
+      }
+      return result.value
+    },
+    confirmImport: async (confirmationId: PluginMarketplaceConfirmationId) => {
+      const result = await ctx.remote.pluginMarketplace.confirmImport({ confirmationId, acknowledgeRisks: true })
+      if (!result.ok) {
+        throw new Error(`pluginMarketplace.confirmImport failed: ${result.error.code}: ${result.error.message}`)
       }
       return result.value
     },

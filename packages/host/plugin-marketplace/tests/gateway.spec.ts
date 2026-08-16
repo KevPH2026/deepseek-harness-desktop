@@ -23,6 +23,7 @@ const CONFIG: Config = {
   validationTtlMs: 60_000,
   minValidationIntervalMs: 1_000,
   validationTimeoutMs: 10_000,
+  curatedInstallTimeoutMs: 60_000,
 }
 
 /** Minimal durable-domain fake; the Gateway still owns open/close lifecycle. */
@@ -101,17 +102,20 @@ describe('PluginMarketplaceGateway', () => {
     expect(remoteMethods(gateway).map(method => method.method).sort()).toEqual([
       'catalog',
       'confirmImport',
+      'curatedBundleStatus',
+      'installCuratedBundle',
       'prepareImport',
       'resources',
+      'uninstallCuratedBundle',
       'validateCatalogItem',
     ])
-    const confirmation = gateway.confirmImport({
+    const confirmation = await gateway.confirmImport({
       confirmationId: 'unused' as PluginMarketplaceConfirmationId,
       acknowledgeRisks: true,
     })
     expect(confirmation.ok).toBe(false)
-    if (confirmation.ok) throw new Error('installation must remain disabled')
-    expect(confirmation.error.code).toBe('installation-disabled')
+    if (confirmation.ok) throw new Error('unknown confirmation should fail')
+    expect(confirmation.error.code).toBe('confirmation-not-found')
   })
 
   it('persists one successful topic page and serves it explicitly from cache offline', async () => {

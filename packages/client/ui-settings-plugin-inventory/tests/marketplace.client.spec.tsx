@@ -130,6 +130,27 @@ function props(
     catalog,
     resources: vi.fn(async () => RESOURCES),
     validateCatalogItem,
+    curatedBundleStatus: vi.fn(async () => ({
+      package: '@linxin666/dsh-web-ui-all',
+      installed: false,
+      version: undefined,
+    })),
+    installCuratedBundle: vi.fn(async () => ({
+      ok: true,
+      installed: true,
+      requiresRestart: true,
+      errorCode: undefined,
+      detail: undefined,
+    })),
+    uninstallCuratedBundle: vi.fn(async () => ({
+      ok: true,
+      installed: false,
+      requiresRestart: true,
+      errorCode: undefined,
+      detail: undefined,
+    })),
+    prepareImport: vi.fn(async () => ({ ok: false, error: { code: 'invalid-source' as const, message: 'disabled' } })),
+    confirmImport: vi.fn(async () => ({ ok: false, error: { code: 'confirmation-not-found' as const, message: 'disabled', exitCode: null } })),
   } as unknown as PluginMarketplaceSettingsTabProps
 }
 
@@ -173,7 +194,7 @@ describe('PluginMarketplaceSettingsTab', () => {
     await waitFor(() => { expect(validateCatalogItem).toHaveBeenCalledWith(DESIGN_ITEM.id) })
     expect(await screen.findByText(en.marketCompatibilityValidated)).toBeTruthy()
     const button = screen.getByRole('button', { name: en.marketImportReady }) as HTMLButtonElement
-    expect(button.disabled).toBe(true)
+    expect(button.disabled).toBe(false)
     expect(screen.getByText(/@fixture\/design-plugin/)).toBeTruthy()
   })
 
