@@ -1,15 +1,18 @@
+// @vitest-environment jsdom
 /** ui-theme apply wiring: service provision, settings dictionaries riding the
  * locale service, declaration-aware Appearance row registration, snapshot
  * projection into the row store, and HMR collapse recovery. */
 import { Context } from '@deepseek-ai/cordis'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { TestRemote, usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-test-runtime'
 import { SettingsScopeBinder } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { apply, inject, SETTINGS_NS } from '@deepseek-ai/dsh-client-ui-theme/client'
 import type { AppearanceRowInjected, ThemeRuntime } from '@deepseek-ai/dsh-client-ui-theme/client'
-import { THEME_SETTINGS_NAMESPACE, ThemeSettingsSchema } from '../src/theme-settings.ts'
+import {
+  THEME_BOOTSTRAP_ATTRIBUTE, THEME_SETTINGS_NAMESPACE, ThemeSettingsSchema,
+} from '../src/theme-settings.ts'
 import { AppearanceRow } from '../src/client/AppearanceRow.tsx'
 import type { createAppearanceRowStore } from '../src/client/settings-store.ts'
 
@@ -18,6 +21,10 @@ import type { createAppearanceRowStore } from '../src/client/settings-store.ts'
 usePinnedBrowserLanguages('zh-CN')
 
 const SLOT = 'settings.general.item'
+
+beforeEach(() => {
+  document.documentElement.removeAttribute(THEME_BOOTSTRAP_ATTRIBUTE)
+})
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -111,11 +118,11 @@ describe('ui-theme apply', () => {
     await b.ctx.plugin({ inject: [...inject], apply }).await()
     const theme = b.ctx.get('theme') as ThemeRuntime
     // An event ahead of any inject hits the unbound-actions arm.
-    theme.setTheme('dark')
+    theme.setTheme('deep-sea')
 
     const { instance, face } = faceOf(b.slots)
     // The inject-time re-sync sealed the init window: the mirror is current.
-    expect(instance.getSnapshot().preference).toBe('dark')
+    expect(instance.getSnapshot().preference).toBe('deep-sea')
     // Copy rides the standard locale seat: the entry declares the namespace.
     expect(b.slots.entries(SLOT).find(e => e.component === AppearanceRow)!.locale).toBe(SETTINGS_NS)
 
@@ -154,15 +161,20 @@ describe('ui-theme apply', () => {
   it('activates before a slow initial settings read and converges when it settles', async () => {
     const b = await bench()
     b.setHostPreference('dark')
+    document.documentElement.setAttribute(THEME_BOOTSTRAP_ATTRIBUTE, 'aurora-night')
     const describe = b.describe.getMockImplementation()!
     const pending = deferred<Awaited<ReturnType<typeof describe>>>()
     b.describe.mockImplementationOnce(() => pending.promise)
     const fiber = b.ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
     const theme = b.ctx.get('theme') as ThemeRuntime
-    expect(theme.getTheme().preference).toBe('system')
+    expect(theme.getTheme()).toMatchObject({
+      preference: 'aurora-night',
+      active: { id: 'aurora-night', colorScheme: 'dark' },
+    })
     pending.resolve(await describe())
     await vi.waitFor(() => { expect(theme.getTheme().preference).toBe('dark') })
+    expect(document.documentElement.getAttribute(THEME_BOOTSTRAP_ATTRIBUTE)).toBe('dark')
     await fiber.dispose()
   })
 

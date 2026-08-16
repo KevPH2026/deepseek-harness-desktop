@@ -379,6 +379,80 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'channel',
+    summary: 'One-consumer, many-provider channel capability.',
+    description: 'One-consumer, many-provider channel capability.',
+    methods: [
+      {
+        signature: 'registerProvider(provider: ChannelProvider): () => void',
+        description: 'Register one transport provider.',
+        parameters: [{ name: 'provider', description: 'Provider implementation keyed by its stable id.' }],
+        returns: 'effect-owned disposer that removes this exact provider.',
+      },
+      {
+        signature: 'registerConsumer(consumer: ChannelConsumer): () => void',
+        description: 'Register the sole product consumer of admitted messages.',
+        parameters: [{ name: 'consumer', description: 'Consumer that owns application admission and idempotency.' }],
+        returns: 'effect-owned disposer that removes this exact consumer.',
+      },
+      {
+        signature: 'async admit(message: ChannelInboundMessage, signal: AbortSignal = NEVER_ABORTED): Promise<ChannelAdmissionResult>',
+        description: 'Admit one authenticated provider message to the product consumer.',
+        parameters: [{ name: 'message', description: 'Normalized text and complete external identity.' }, { name: 'signal', description: 'Optional provider-operation cancellation.' }],
+        returns: 'whether the message was newly accepted or already admitted.',
+      },
+      {
+        signature: 'async deliver(message: ChannelOutboundMessage, signal: AbortSignal = NEVER_ABORTED): Promise<ChannelDeliveryReceipt>',
+        description: 'Deliver one outbound text through its matching provider.',
+        parameters: [{ name: 'message', description: 'Provider-qualified target and text.' }, { name: 'signal', description: 'Optional caller cancellation.' }],
+        returns: 'the provider receipt after delivery settles.',
+      },
+    ],
+  },
+  {
+    key: 'channelTelegram',
+    summary: 'Telegram provider.',
+    description: 'Telegram provider. Pairing Remotes change only local pairing state; they never submit tasks.',
+    methods: [
+      {
+        signature: '@Remote async status(): Promise<TelegramChannelStatus>',
+        description: 'Read the current safe configuration and runtime projection.',
+        parameters: [],
+        returns: 'Secret-free status for the loopback settings UI.',
+      },
+      {
+        signature: '@Remote beginPairing(): Promise<TelegramBeginPairingResult>',
+        description: 'Enable polling and issue one new 128-bit, ten-minute, single-use pairing capability.',
+        parameters: [],
+        returns: 'Capability once issued, or a stable fail-closed error and safe status.',
+      },
+      {
+        signature: '@Remote confirmPairing(request: TelegramConfirmPairingRequest): Promise<TelegramConfirmPairingResult>',
+        description: 'Bind exactly the pending candidate after a local desktop confirmation.',
+        parameters: [{ name: 'request', description: 'Candidate id displayed and confirmed by the desktop user.' }],
+        returns: 'Updated safe status or a stable candidate-validation failure.',
+      },
+      {
+        signature: '@Remote enable(): Promise<TelegramEnableResult>',
+        description: 'Validate the configured bot and resume polling without changing pairing or binding.',
+        parameters: [],
+        returns: 'Updated safe status or a stable connection-validation failure.',
+      },
+      {
+        signature: '@Remote disable(): Promise<TelegramChannelStatus>',
+        description: 'Stop polling while retaining pending pairing and the confirmed account.',
+        parameters: [],
+        returns: 'Disabled safe status after the poller has stopped.',
+      },
+      {
+        signature: '@Remote revoke(): Promise<TelegramChannelStatus>',
+        description: 'Disable the provider and remove every bot-specific durable identity and offset.',
+        parameters: [],
+        returns: 'Revoked safe status after the poller has stopped.',
+      },
+    ],
+  },
+  {
     key: 'clientModules',
     summary: 'The web plugin table service: incremental `dsh.client` scan + wire composition + bundle route + index tap.',
     description: 'The web plugin table service: incremental `dsh.client` scan + wire composition + bundle route + index tap. Construction runs the activation scan synchronously — a malformed declaration or missing bundle among the already-loaded entries aggregates into one loud throw (FAILED fiber; the boot activation audit reports it).',
@@ -2771,6 +2845,46 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface CancelOptions {\n    keepInbox?: boolean | undefined;\n}',
   },
   {
+    name: 'ChannelAdmissionResult',
+    declaration: 'export type ChannelAdmissionResult = {\n    readonly kind: \'accepted\';\n} | {\n    readonly kind: \'duplicate\';\n};',
+  },
+  {
+    name: 'ChannelConsumer',
+    declaration: 'export interface ChannelConsumer {\n    admit(message: ChannelInboundMessage, signal: AbortSignal): Promise<ChannelAdmissionResult>;\n}',
+  },
+  {
+    name: 'ChannelConversationId',
+    declaration: 'export type ChannelConversationId = Branded<\'ChannelConversationId\'>;',
+  },
+  {
+    name: 'ChannelDeliveryReceipt',
+    declaration: 'export interface ChannelDeliveryReceipt {\n    readonly externalMessageId?: ChannelExternalMessageId;\n}',
+  },
+  {
+    name: 'ChannelExternalMessageId',
+    declaration: 'export type ChannelExternalMessageId = Branded<\'ChannelExternalMessageId\'>;',
+  },
+  {
+    name: 'ChannelInboundMessage',
+    declaration: 'export interface ChannelInboundMessage {\n    readonly provider: ChannelProviderId;\n    readonly conversationId: ChannelConversationId;\n    readonly senderId: ChannelSenderId;\n    readonly externalMessageId: ChannelExternalMessageId;\n    readonly text: string;\n}',
+  },
+  {
+    name: 'ChannelOutboundMessage',
+    declaration: 'export interface ChannelOutboundMessage {\n    readonly provider: ChannelProviderId;\n    readonly conversationId: ChannelConversationId;\n    readonly text: string;\n    readonly replyTo?: ChannelExternalMessageId;\n}',
+  },
+  {
+    name: 'ChannelProvider',
+    declaration: 'export interface ChannelProvider {\n    readonly id: ChannelProviderId;\n    deliver(message: ChannelOutboundMessage, signal: AbortSignal): Promise<ChannelDeliveryReceipt>;\n}',
+  },
+  {
+    name: 'ChannelProviderId',
+    declaration: 'export type ChannelProviderId = Branded<\'ChannelProviderId\'>;',
+  },
+  {
+    name: 'ChannelSenderId',
+    declaration: 'export type ChannelSenderId = Branded<\'ChannelSenderId\'>;',
+  },
+  {
     name: 'ClientResponse',
     declaration: 'export interface ClientResponse {\n    type: \'client-response\';\n    rpcId: RpcId;\n    result: RpcResult<unknown>;\n}',
   },
@@ -4409,6 +4523,62 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TableValueOf',
     declaration: 'export type TableValueOf<S extends DomainSpec, N extends keyof S[\'tables\']> = S[\'tables\'][N] extends DomainTableSpec<string, infer V> ? V : never;',
+  },
+  {
+    name: 'TelegramBeginPairingErrorCode',
+    declaration: 'export type TelegramBeginPairingErrorCode = \'already-paired\' | \'credential-missing\' | \'unauthorized\' | \'webhook-active\' | \'api-conflict\' | \'bot-identity-changed\' | \'bot-username-missing\' | \'backlog-pending\' | \'connection-failed\' | \'service-stopping\';',
+  },
+  {
+    name: 'TelegramBeginPairingResult',
+    declaration: 'export type TelegramBeginPairingResult = {\n    readonly ok: true;\n    readonly value: TelegramPairingCapability;\n} | {\n    readonly ok: false;\n    readonly error: {\n        readonly code: TelegramBeginPairingErrorCode;\n    };\n    readonly status: TelegramChannelStatus;\n};',
+  },
+  {
+    name: 'TelegramBotIdentity',
+    declaration: 'export interface TelegramBotIdentity {\n    readonly id: string;\n    readonly username: string;\n    readonly firstName: string;\n}',
+  },
+  {
+    name: 'TelegramBoundAccount',
+    declaration: 'export interface TelegramBoundAccount {\n    readonly userId: string;\n    readonly chatId: string;\n    readonly firstName: string;\n    readonly lastName?: string | undefined;\n    readonly username?: string | undefined;\n    readonly confirmedAt: number;\n}',
+  },
+  {
+    name: 'TelegramChannelStatus',
+    declaration: 'export interface TelegramChannelStatus {\n    readonly enabled: boolean;\n    readonly credentialConfigured: boolean;\n    readonly runtime: TelegramRuntimePhase;\n    readonly pairing: TelegramPairingStatus;\n    readonly bot?: TelegramBotIdentity;\n    readonly lastProcessedUpdateId?: number;\n    readonly retryAt?: number;\n    readonly pendingUpdateCount?: number;\n}',
+  },
+  {
+    name: 'TelegramConfirmPairingErrorCode',
+    declaration: 'export type TelegramConfirmPairingErrorCode = \'candidate-missing\' | \'candidate-expired\' | \'candidate-mismatch\' | \'service-stopping\';',
+  },
+  {
+    name: 'TelegramConfirmPairingRequest',
+    declaration: 'export interface TelegramConfirmPairingRequest {\n    readonly candidateId: string;\n}',
+  },
+  {
+    name: 'TelegramConfirmPairingResult',
+    declaration: 'export type TelegramConfirmPairingResult = {\n    readonly ok: true;\n    readonly value: TelegramChannelStatus;\n} | {\n    readonly ok: false;\n    readonly error: {\n        readonly code: TelegramConfirmPairingErrorCode;\n    };\n    readonly status: TelegramChannelStatus;\n};',
+  },
+  {
+    name: 'TelegramEnableErrorCode',
+    declaration: 'export type TelegramEnableErrorCode = Exclude<TelegramBeginPairingErrorCode, \'already-paired\'>;',
+  },
+  {
+    name: 'TelegramEnableResult',
+    declaration: 'export type TelegramEnableResult = {\n    readonly ok: true;\n    readonly value: TelegramChannelStatus;\n} | {\n    readonly ok: false;\n    readonly error: {\n        readonly code: TelegramEnableErrorCode;\n    };\n    readonly status: TelegramChannelStatus;\n};',
+  },
+  {
+    name: 'TelegramPairingCandidate',
+    declaration: 'export interface TelegramPairingCandidate {\n    readonly candidateId: string;\n    readonly userId: string;\n    readonly chatId: string;\n    readonly firstName: string;\n    readonly lastName?: string | undefined;\n    readonly username?: string | undefined;\n    readonly receivedAt: number;\n    readonly expiresAt: number;\n}',
+  },
+  {
+    name: 'TelegramPairingCapability',
+    declaration: 'export interface TelegramPairingCapability {\n    readonly token: string;\n    readonly deepLink: string;\n    readonly expiresAt: number;\n    readonly status: TelegramChannelStatus;\n}',
+  },
+  {
+    name: 'TelegramPairingStatus',
+    declaration: 'export type TelegramPairingStatus = {\n    readonly kind: \'unpaired\';\n} | {\n    readonly kind: \'waiting\';\n    readonly expiresAt: number;\n} | {\n    readonly kind: \'candidate\';\n    readonly candidate: TelegramPairingCandidate;\n} | {\n    readonly kind: \'paired\';\n    readonly account: TelegramBoundAccount;\n};',
+  },
+  {
+    name: 'TelegramRuntimePhase',
+    declaration: 'export type TelegramRuntimePhase = \'disabled\' | \'starting\' | \'polling\' | \'credential-missing\' | \'credential-changed\' | \'webhook-active\' | \'unauthorized\' | \'api-conflict\' | \'rate-limited\' | \'backing-off\' | \'backlog-pending\' | \'error\' | \'stopping\';',
   },
   {
     name: 'TerminalBackend',

@@ -6,7 +6,7 @@
 
 English | [中文](README.zh.md)
 
-<p align="center"><strong>A desktop agent workspace that can reason, code, use tools, generate media, and grow through community plugins.</strong></p>
+<p align="center"><strong>A desktop agent workspace for coding, tools, media generation, and safe research or writing tasks from a paired Telegram account.</strong></p>
 
 <p align="center">
   <a href="https://github.com/KevPH2026/deepseek-harness-desktop/releases"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/KevPH2026/deepseek-harness-desktop?include_prereleases&style=flat-square"></a>
@@ -23,12 +23,13 @@ English | [中文](README.zh.md)
 
 ## One workspace, more ways to finish the job
 
-DeepSeek Harness already provides a capable plugin-based agent harness. This community edition brings it into a supervised macOS desktop app and adds the product surfaces that make it easier to use every day: configurable image and video generation, a source-aware community plugin catalog with on-demand manifest validation, release-aware updates, version notes, and a direct feedback path.
+DeepSeek Harness already provides a capable plugin-based agent harness. This community edition brings it into a supervised macOS desktop app and adds the product surfaces that make it easier to use every day: configurable image and video generation, a paired Telegram control channel, a source-aware community plugin catalog with on-demand manifest validation, release-aware updates, version notes, and a direct feedback path.
 
 | What you can do | How the desktop edition helps |
 |---|---|
 | Build and change software | Give the agent a workspace, let it inspect files, run tools, plan changes, and keep sessions together. |
 | Create visual deliverables | Configure image and video providers once; the agent can request the right media tool when the deliverable genuinely needs it. |
+| Continue research and writing from your phone | Pair one private Telegram account on the desktop, send a text task while the Mac stays online, and receive the safe Agent's final response in the same chat. |
 | Extend for your workflow | Discover community plugins by scenario, inspect trust signals, and validate one selected repository at a time; installation remains disabled in the source beta. |
 | Connect your model stack | Use DeepSeek and supported compatible providers or gateways without coupling the desktop shell to one inference backend. |
 | Stay current | Read release notes in the app, check signed GitHub Releases, and choose when to download and install an update. |
@@ -51,6 +52,16 @@ DeepSeek Harness already provides a capable plugin-based agent harness. This com
 - Media tools are disabled until configured and use approval-before-spend by default.
 - The agent chooses media tools only when they improve the requested deliverable; ordinary coding and writing tasks stay text-first.
 - Generated artifacts render as first-class result cards and remain available in the session.
+
+### Telegram phone control
+
+- Connect a dedicated Telegram Bot, generate a ten-minute single-use link, and approve the exact Telegram user and private-chat IDs on the desktop.
+- Send ordinary text to start or continue an Agent session; use `/new`, `/sessions`, `/use`, `/status`, `/stop`, and `/help` for explicit control.
+- Every accepted message is durably recorded and deduplicated before Telegram advances its update offset. The final Agent response returns to the bound chat.
+- Finished replies wait in a durable outbox: temporary delivery failures retry with backoff without rerunning the task, while changing the Bot or exceeding three message parts permanently ends that delivery. A crash after Telegram accepts a message but before the local marker is saved can repeat one message.
+- The Mac stays on `127.0.0.1`: Telegram uses outbound long polling and never turns the Harness Web API into a public server.
+- Phone tasks use the dedicated `telegram-safe` Agent preset: plain-text reasoning and `web_search` only. Local files, Shell, code execution, credentials, settings, approvals, paid media tools, subagents, workflows, and raw RPC are unavailable.
+- A monotonic execution guard enforces that capability boundary even if another Host plugin later registers a new tool. Telegram cannot change the preset or permission.
 
 ### Community plugin marketplace
 
@@ -95,6 +106,7 @@ See the [desktop build and security guide](apps/desktop/README.md) before distri
 - **Plugins execute code.** When installation is enabled in a future build, installing a Git source may run a package build outside the agent sandbox. Review the source, pin a commit, and approve build scripts only for code you trust. The current source beta keeps marketplace installation disabled.
 - **Loopback is local, not secret.** The first desktop transport trusts other native processes running as the same logged-in user. Do not combine a sensitive session with untrusted local software.
 - **Media calls may cost money.** The default approval policy asks before generation. Provider prices, eligibility, and rate limits remain the provider's responsibility.
+- **Telegram Bot chats are not end-to-end encrypted.** Telegram can process messages sent to the Bot, and every accepted task may consume model or search quota. Use a dedicated Bot, never send passwords or API keys, and keep the Mac running in the tray while you expect remote tasks. While the channel is disabled, messages do not run. If Telegram reports queued updates, the client stays disabled and does not read, acknowledge, or clear them; wait up to 24 hours for Telegram to expire them, or revoke the binding, remove the token, and pair a new dedicated Bot.
 - **Only signed releases auto-update.** Local unsigned builds can check for updates but fail safely instead of bypassing macOS trust protections.
 
 ## Product documentation

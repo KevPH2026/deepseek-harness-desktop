@@ -90,6 +90,51 @@ and [Send Feedback](https://github.com/KevPH2026/deepseek-harness-desktop/issues
 The initial bilingual desktop release notes are in the single source of truth,
 [CHANGELOG.md](CHANGELOG.md).
 
+## Telegram phone control
+
+The desktop can pair one private Telegram account to a dedicated Bot without
+opening a public Harness port:
+
+1. Create a dedicated Bot with Telegram's `@BotFather` and copy its token.
+2. Open **Settings → Telegram Remote**, save the token, and enable the channel.
+3. Generate the ten-minute single-use pairing link and open it on the phone.
+4. Return to the desktop, verify the numeric Telegram user and private-chat IDs,
+   then approve that candidate.
+5. Send ordinary task text or use `/new`, `/sessions`, `/use`, `/status`,
+   `/stop`, and `/help` in the private Bot chat.
+
+Closing the window leaves the tray process and outbound Telegram long poll
+running. Explicit Quit, sleep, loss of network, or stopping the Mac makes the
+channel unavailable. Phone tasks always use the dedicated `telegram-safe`
+preset: plain-text reasoning and `web_search` only. A monotonic execution guard
+blocks local files, Shell, code execution, credentials, settings, approvals,
+paid media tools, subagents, workflows, and raw Host RPC even if another plugin
+registers a new tool. Telegram cannot change that preset or its `read-only`
+permission.
+
+While the channel is disabled, the desktop does not execute phone messages. If
+Telegram reports queued updates, the client stays disabled and does not execute
+or acknowledge them, advance the update offset, or clear the queue. Leave the
+channel disabled for up to 24 hours so Telegram can expire those updates, or
+revoke the binding, remove the token, and pair a new dedicated Bot.
+
+Completed results enter a durable outbox. A temporary offline or Bot API failure
+retries with exponential backoff without running the Agent prompt again.
+Changing the Bot or producing more than three Telegram message parts permanently
+ends that delivery. Delivery is at least once: if Telegram accepts a message and
+the app crashes before its local marker is saved, recovery can repeat one
+message.
+
+The Bot token is held by the existing owner-only local credential provider. It
+is not written to ordinary settings, channel storage, session messages, or
+Remote responses. This is not an OS Keychain boundary: another process running
+as the same local user may still be able to read that provider's files. Use a
+dedicated Bot, never send secrets in the chat, and revoke or rotate its token in
+BotFather if it may have leaked.
+
+Telegram Bot chats are not end-to-end encrypted. Telegram can process the
+messages sent to the Bot, and accepted tasks may consume model or search quota.
+
 ## Security and lifecycle
 
 The renderer runs with Node integration disabled, context isolation enabled, the Chromium sandbox enabled, and Web security enabled. Navigation stays on the assigned Harness origin; HTTP and HTTPS links open through the operating-system browser, while every other protocol is denied.
@@ -116,10 +161,11 @@ The supervised Node-mode child starts with `--expose-internals`, which the
 current Harness Web profile requires for its HMR service on macOS.
 
 The desktop manifest owns the explicit, peer-closed Harness runtime root.
-`npm run desktop:verify-runtime` must pass before deployment; automatic peer
-installation stays disabled so a missing packaged peer fails the build instead
-of appearing only on a user's machine. The staging pass also restores pnpm's
-legacy hoists and materializes vendored `link:` packages, leaving no package
-symlink back into the source checkout.
+`npm run desktop:verify-runtime` must pass before deployment, so a missing
+packaged peer fails the build instead of appearing only on a user's machine.
+The production stage is resolved from the committed frozen lockfile, skips
+dependency lifecycle scripts, and injects workspace packages into the deploy.
+The final pass restores any omitted direct package and materializes remaining
+package links, leaving no symlink back into the source checkout.
 
 The first package keeps the Harness runtime outside ASAR because profile fallback links, dynamic plugins, workers, native modules, and the `node-pty` helper require real filesystem paths. A future `file://` renderer needs a complete IPC carrier for unary calls, streams, client modules, and cancellation; the Web carrier is retained until that transport exists.

@@ -1,13 +1,14 @@
 /**
- * Make pnpm's legacy desktop deployment self-contained for Electron Builder.
+ * Make pnpm's lockfile-driven desktop deployment self-contained for Electron Builder.
  *
- * The production deploy can omit direct workspace packages hoisted beside the
- * source project, while link: overrides can remain as paths into the checkout.
- * Restore every direct dependency and replace package links with real files so
- * the generated .app has no dependency on the source repository.
+ * Restore any direct package omitted by deployment and replace package links
+ * with real files so the generated .app has no dependency on the source
+ * repository. This also acts as a compatibility guard if pnpm changes the
+ * shape of injected workspace packages in a future release.
  */
+import { homedir } from 'node:os'
 import {
-  copyFile, cp, lstat, mkdir, readFile, readdir, realpath, rm, stat, writeFile,
+  chmod, copyFile, cp, lstat, mkdir, readFile, readdir, realpath, rm, stat, writeFile,
 } from 'node:fs/promises'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 
@@ -63,15 +64,112 @@ if (missing.length > 0) {
   throw new Error(`prepare-desktop-stage: staged dependencies remain missing: ${missing.join(', ')}.`)
 }
 
+const executableHelpers = await makeNodePtySpawnHelpersExecutable(stageNodeModules)
+const scrubbedMetadata = await scrubPnpmMetadata(stage, root)
+
 await copyFile(join(root, 'LICENSE'), join(stage, 'LICENSE'))
 await copyFile(join(root, 'THIRD_PARTY_NOTICES.md'), join(stage, 'THIRD_PARTY_NOTICES.md'))
 for (const filename of ['README.md', 'README.zh.md']) {
   await rewriteStagedLegalLinks(join(stage, filename))
 }
 
+await assertStageFreeOfBuildMachinePaths(stage, root)
+
 console.log(
-  `prepare-desktop-stage: restored ${String(restored.length)} direct dependencies, materialized ${String(materialized)} package links, and staged legal resources.`,
+  `prepare-desktop-stage: restored ${String(restored.length)} direct dependencies, materialized ${String(materialized)} package links, made ${String(executableHelpers)} node-pty helpers executable, scrubbed ${String(scrubbedMetadata)} pnpm metadata files, and staged legal resources.`,
 )
+
+/**
+ * Rewrite the build machine's checkout and home paths out of the pnpm records
+ * `deploy` copies into the stage. Every workspace dependency arrives spelled
+ * as `file:///…/deepseek-harness-desktop/…`, and the store inventory keeps
+ * absolute `~/Library/pnpm` locations; once the install is materialized the
+ * records are inert, so they are rebased to checkout-relative specifiers and
+ * `~`-prefixed store paths that no longer disclose the packaging account.
+ */
+async function scrubPnpmMetadata(stage: string, repositoryRoot: string): Promise<number> {
+  const home = homedir()
+  const metadataFiles = [
+    join(stage, 'package.json'),
+    join(stage, 'pnpm-lock.yaml'),
+    join(stage, 'node_modules', '.modules.yaml'),
+    join(stage, 'node_modules', '.pnpm-workspace-state-v1.json'),
+    join(stage, 'node_modules', '.pnpm', 'lock.yaml'),
+  ]
+  let scrubbed = 0
+  for (const path of metadataFiles) {
+    if (!await exists(path)) continue
+    let source = await readFile(path, 'utf8')
+    const rewritten = source
+      .replaceAll(`file://${repositoryRoot}`, 'file:.')
+      .replaceAll(`${repositoryRoot}/`, './')
+      .replaceAll(`${home}/`, '~/')
+    if (rewritten !== source) {
+      await writeFile(path, rewritten)
+      source = rewritten
+    }
+    if (source.includes(repositoryRoot) || source.includes(home)) {
+      throw new Error(`prepare-desktop-stage: ${path} still mentions the build machine's paths.`)
+    }
+    scrubbed += 1
+  }
+  return scrubbed
+}
+
+/**
+ * Release hygiene gate: no staged file may embed the absolute checkout or home
+ * directory (and thereby the packaging account). Binary-safe scan so compiled
+ * `.node` payloads are covered too.
+ */
+async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot: string): Promise<void> {
+  const needles = [Buffer.from(repositoryRoot, 'utf8'), Buffer.from(homedir(), 'utf8')]
+  const offenders: string[] = []
+  await scan(stage)
+
+  if (offenders.length > 0) {
+    throw new Error(`prepare-desktop-stage: staged files embed build machine paths: ${offenders.join(', ')}.`)
+  }
+
+  async function scan(directory: string): Promise<void> {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name)
+      if (entry.isDirectory()) {
+        await scan(path)
+        continue
+      }
+      if (!entry.isFile()) continue
+      if (await fileContains(path, needles)) offenders.push(relative(stage, path))
+    }
+  }
+}
+
+/** Read one staged file (the largest payloads are single-digit MB dylibs) and search its bytes. */
+async function fileContains(path: string, needles: readonly Buffer[]): Promise<boolean> {
+  const content = await readFile(path)
+  return needles.some(needle => content.includes(needle))
+}
+
+/** Reproduce node-pty's install-time chmod while dependency scripts stay disabled. */
+async function makeNodePtySpawnHelpersExecutable(nodeModules: string): Promise<number> {
+  const prebuilds = join(nodeModules, 'node-pty', 'prebuilds')
+  const platforms = (await readdir(prebuilds, { withFileTypes: true }))
+    .filter(entry => entry.isDirectory() && entry.name.startsWith('darwin-'))
+    .map(entry => join(prebuilds, entry.name, 'spawn-helper'))
+    .sort()
+
+  if (platforms.length === 0) {
+    throw new Error('prepare-desktop-stage: node-pty has no packaged macOS spawn-helper.')
+  }
+
+  for (const helper of platforms) {
+    await chmod(helper, 0o755)
+    const metadata = await stat(helper)
+    if ((metadata.mode & 0o111) !== 0o111) {
+      throw new Error(`prepare-desktop-stage: node-pty helper is not executable: ${helper}.`)
+    }
+  }
+  return platforms.length
+}
 
 /** Point the packaged README copy at legal files beside it without changing the repository README. */
 async function rewriteStagedLegalLinks(path: string): Promise<void> {

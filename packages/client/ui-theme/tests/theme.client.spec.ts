@@ -29,7 +29,9 @@ describe('ThemeRuntime', () => {
     // jsdom matchMedia is absent; system resolves to light.
     expect(snapshot.active.id).toBe('light')
     expect(snapshot.active.colorScheme).toBe('light')
-    expect(snapshot.themes.map(t => t.id)).toEqual(['light', 'dark'])
+    expect(snapshot.themes.map(t => t.id)).toEqual([
+      'light', 'dark', 'deep-sea', 'aurora-night', 'warm-paper',
+    ])
   })
 
   it('setTheme switches, writes through the scope, republishes, and keeps DOM untouched', () => {
@@ -60,27 +62,61 @@ describe('ThemeRuntime', () => {
 
   it('adopts a section already standing at construction', () => {
     const host = stubSettingsScope<ThemeSettings>()
-    host.publish({ status: 'ready', value: { preference: 'dark' }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'deep-sea' }, revision: 1, writable: true })
     const { theme } = make(host)
-    expect(theme.getTheme().preference).toBe('dark')
+    expect(theme.getTheme().preference).toBe('deep-sea')
+    expect(theme.getTheme().active).toMatchObject({ id: 'deep-sea', colorScheme: 'dark' })
+    expect(theme.getTheme().active.tokens['--dsw-alias-bg-base']).toBe('#071923')
+  })
+
+  it('holds the synchronous bootstrap skin until the Host scope hydrates', () => {
+    const ctx = new Context()
+    const host = stubSettingsScope<ThemeSettings>()
+    const theme = new ThemeRuntime(ctx, host.scope, 'aurora-night')
+    expect(host.scope.getSnapshot()).toMatchObject({ status: 'loading', value: undefined })
+    expect(theme.getTheme()).toMatchObject({
+      preference: 'aurora-night',
+      active: { id: 'aurora-night', colorScheme: 'dark' },
+    })
+    host.publish({ status: 'ready', value: { preference: 'warm-paper' }, revision: 1, writable: true })
+    expect(theme.getTheme()).toMatchObject({
+      preference: 'warm-paper',
+      active: { id: 'warm-paper', colorScheme: 'light' },
+    })
+  })
+
+  it('switches and persists every product-owned skin', () => {
+    const { theme, host } = make()
+    for (const id of ['deep-sea', 'aurora-night', 'warm-paper'] as const) {
+      theme.setTheme(id)
+      expect(theme.getTheme().preference).toBe(id)
+      expect(theme.getTheme().active.id).toBe(id)
+      expect(theme.getTheme().active.tokens).not.toEqual({})
+      expect(host.set).toHaveBeenLastCalledWith('preference', id)
+    }
   })
 
   it('throws on unknown setTheme ids, duplicate registration, and the system id', () => {
     const { theme } = make()
     expect(() => { theme.setTheme('sepia') }).toThrow('not registered')
     expect(() => theme.register({ id: 'light', colorScheme: 'light', tokens: {} })).toThrow('already registered')
+    expect(() => theme.register({ id: 'deep-sea', colorScheme: 'dark', tokens: {} })).toThrow('already registered')
     expect(() => theme.register({ id: 'system', colorScheme: 'light', tokens: {} })).toThrow('preference')
   })
 
   it('registered themes join the snapshot; disposing the active one resets to default', () => {
     const { theme, events, host } = make()
     const dispose = theme.register({ id: 'sepia', colorScheme: 'light', tokens: { '--dsw-alias-bg-base': 'red' } })
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'sepia'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual([
+      'light', 'dark', 'deep-sea', 'aurora-night', 'warm-paper', 'sepia',
+    ])
     theme.setTheme('sepia')
     expect(theme.getTheme().active.tokens['--dsw-alias-bg-base']).toBe('red')
     dispose()
     expect(theme.getTheme().preference).toBe('system')
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual([
+      'light', 'dark', 'deep-sea', 'aurora-night', 'warm-paper',
+    ])
     // Custom ids are in-process extension themes; only the built-in product
     // preferences cross the Host settings schema.
     expect(host.set).not.toHaveBeenCalled()

@@ -99,6 +99,29 @@
     - id: plugin-marketplace
       name: '@deepseek-ai/dsh-host-plugin-marketplace'
 
+    # Optional public profile data. Every field defaults model-hidden and the
+    # context renderer projects only explicit per-field consent.
+    - id: user-profile
+      name: '@deepseek-ai/dsh-user-profile'
+
+    # Provider-neutral mobile text bridge. Telegram remains an outbound-only
+    # Bot API client; no Host listener or raw `/api` route is exposed.
+    - id: channel
+      name: '@deepseek-ai/dsh-channel'
+
+    - id: channel-telegram
+      name: '@deepseek-ai/dsh-channel-telegram'
+
+    # Providers register before the Agent consumer recovers durable pending
+    # deliveries. This prevents a completed task from being stranded at boot.
+    - id: channel-agent
+      name: '@deepseek-ai/dsh-channel-agent'
+      config:
+        agentPreset: telegram-safe
+        permissionPreset: read-only
+        maxInputBytes: 8192
+        maxSessionsPerConversation: 20
+
     # The API gateway: the transport-agnostic dispatch face every client shape
     # shares. The base layer's agent-default-model service owns the default model.
     - id: api-gateway
@@ -201,6 +224,12 @@
 
     - id: ui-settings-about-community
       name: '@deepseek-ai/dsh-client-ui-settings-about-community'
+
+    - id: ui-settings-channel-telegram
+      name: '@deepseek-ai/dsh-client-ui-settings-channel-telegram'
+
+    - id: ui-settings-profile
+      name: '@deepseek-ai/dsh-client-ui-settings-profile'
 
     - id: ui-settings-models
       name: '@deepseek-ai/dsh-client-ui-settings-models'

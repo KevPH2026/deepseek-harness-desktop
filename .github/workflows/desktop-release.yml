@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing vSemVer tag to release (for example v0.1.0-beta.1)
+        description: Existing vSemVer tag to release (for example v0.1.0-beta.2)
         required: true
         type: string
 
@@ -92,7 +92,16 @@ jobs:
             apps/desktop/tests \
             packages/media/media-generation/tests \
             packages/host/plugin-marketplace/tests \
-            packages/client/ui-settings-plugin-inventory/tests
+            packages/client/ui-settings-plugin-inventory/tests \
+            packages/interaction/channel/tests \
+            packages/interaction/channel-agent/tests \
+            packages/interaction/channel-telegram/tests \
+            packages/client/ui-settings-channel-telegram/tests \
+            packages/client/connection/tests/node-half.host.spec.ts \
+            apps/cli/tests/web-agent-presets.e2e.ts \
+            packages/client/ui-theme/tests \
+            packages/context/user-profile/tests \
+            packages/client/ui-settings-profile/tests
 
       - name: Build signed and notarized distribution
         env:
@@ -174,6 +183,27 @@ jobs:
             echo "Update feed ZIP ($feed_zip) does not match uploaded ZIP ($(basename "$zip_path"))" >&2
             exit 1
           fi
+
+      - name: Notarize, staple, and assess DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          dmg_path="$(find apps/desktop/release -maxdepth 1 -type f -name '*.dmg' -print -quit)"
+          if [ -z "$dmg_path" ] || [ ! -f "$dmg_path" ]; then
+            echo "Missing DMG for notarization" >&2
+            exit 1
+          fi
+
+          xcrun notarytool submit "$dmg_path" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+          xcrun stapler staple "$dmg_path"
+          xcrun stapler validate "$dmg_path"
+          spctl --assess --type open --context context:primary-signature --verbose=4 "$dmg_path"
 
       - name: Create verified GitHub Release
         env:

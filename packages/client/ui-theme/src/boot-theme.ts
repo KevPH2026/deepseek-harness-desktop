@@ -5,18 +5,27 @@
  * ThemePresenter owns after the client plugin tree activates.
  */
 
-import { DEFAULT_PREFERENCE, type ThemePreference } from './theme-settings.ts'
+import { getBuiltinSkin } from './builtin-themes.ts'
+import {
+  DEFAULT_PREFERENCE, isBuiltinSkinPreference, THEME_BOOTSTRAP_ATTRIBUTE, type ThemePreference,
+} from './theme-settings.ts'
 
 /** Build the inline script for one schema-validated built-in preference. */
 function bootThemeScript(preference: ThemePreference): string {
+  const skin = isBuiltinSkinPreference(preference) ? getBuiltinSkin(preference) : undefined
   return `<script>(() => {
   const preference = ${JSON.stringify(preference)}
+  const skin = ${JSON.stringify(skin)}
   const systemDark = preference === 'system'
     && typeof matchMedia !== 'undefined'
     && matchMedia('(prefers-color-scheme: dark)').matches
-  const dark = preference === 'dark' || systemDark
+  const dark = skin?.colorScheme === 'dark' || preference === 'dark' || systemDark
+  document.documentElement.setAttribute(${JSON.stringify(THEME_BOOTSTRAP_ATTRIBUTE)}, preference)
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
   document.body.toggleAttribute('data-ds-dark-theme', dark)
+  for (const [name, value] of Object.entries(skin?.tokens ?? {})) {
+    document.body.style.setProperty(name, value)
+  }
 })()</script>`
 }
 

@@ -49,6 +49,30 @@ extraResources:
     to: app/node_modules/@deepseek-ai/dsh-host-plugin-marketplace/README.i18n.yaml
   - from: .stage/node_modules/@deepseek-ai/dsh-client-ui-settings-about-community/README.md
     to: app/node_modules/@deepseek-ai/dsh-client-ui-settings-about-community/README.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel/README.md
+    to: app/node_modules/@deepseek-ai/dsh-channel/README.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel/README.zh.md
+    to: app/node_modules/@deepseek-ai/dsh-channel/README.zh.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel/README.i18n.yaml
+    to: app/node_modules/@deepseek-ai/dsh-channel/README.i18n.yaml
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel-agent/README.md
+    to: app/node_modules/@deepseek-ai/dsh-channel-agent/README.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel-agent/README.zh.md
+    to: app/node_modules/@deepseek-ai/dsh-channel-agent/README.zh.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel-agent/README.i18n.yaml
+    to: app/node_modules/@deepseek-ai/dsh-channel-agent/README.i18n.yaml
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel-telegram/README.md
+    to: app/node_modules/@deepseek-ai/dsh-channel-telegram/README.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel-telegram/README.zh.md
+    to: app/node_modules/@deepseek-ai/dsh-channel-telegram/README.zh.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-channel-telegram/README.i18n.yaml
+    to: app/node_modules/@deepseek-ai/dsh-channel-telegram/README.i18n.yaml
+  - from: .stage/node_modules/@deepseek-ai/dsh-client-ui-settings-channel-telegram/README.md
+    to: app/node_modules/@deepseek-ai/dsh-client-ui-settings-channel-telegram/README.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-client-ui-settings-channel-telegram/README.zh.md
+    to: app/node_modules/@deepseek-ai/dsh-client-ui-settings-channel-telegram/README.zh.md
+  - from: .stage/node_modules/@deepseek-ai/dsh-client-ui-settings-channel-telegram/README.i18n.yaml
+    to: app/node_modules/@deepseek-ai/dsh-client-ui-settings-channel-telegram/README.i18n.yaml
 
 # Harness resolves plugins, workers, native modules, and node-pty helpers from
 # real filesystem paths. The first desktop release keeps its runtime outside
@@ -61,9 +85,9 @@ mac:
   icon: build/icon.icns
   hardenedRuntime: true
   # Apple bundle versions remain numeric while package.json and the updater
-  # feed retain the full prerelease SemVer (0.1.0-beta.1).
+  # feed retain the full prerelease SemVer (0.1.0-beta.2).
   bundleShortVersion: '0.1.0'
-  bundleVersion: '1'
+  bundleVersion: '2'
   extendInfo:
     NSAppTransportSecurity:
       NSAllowsArbitraryLoads: false

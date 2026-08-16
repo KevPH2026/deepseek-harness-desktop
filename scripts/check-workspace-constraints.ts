@@ -65,8 +65,14 @@ const releaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/[^/]+|vendor\/[
  */
 const communityOnlyDirectories = new Set([
   'apps/desktop',
+  'packages/client/ui-settings-channel-telegram',
+  'packages/client/ui-settings-profile',
   'packages/client/ui-settings-about-community',
   'packages/host/plugin-marketplace',
+  'packages/interaction/channel',
+  'packages/interaction/channel-agent',
+  'packages/interaction/channel-telegram',
+  'packages/context/user-profile',
   'packages/media/media-generation',
 ])
 /** Verified community repository metadata allowed only after the fork exists. */

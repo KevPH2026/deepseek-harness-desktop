@@ -488,6 +488,23 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Search and fetch providers register into one ctx.web seam; tool-web owns the stable model-facing names.',
   },
   {
+    key: 'channel',
+    pkg: 'channel',
+    title: 'Authenticated text-channel seam',
+    mode: 'seam',
+    implementations: ['channel-telegram'],
+    consumers: ['channel-agent'],
+    note: 'Authenticated transports admit normalized text through one product consumer; the Agent consumer owns durable idempotency and routes final text back through the originating provider.',
+  },
+  {
+    key: 'channelTelegram',
+    pkg: 'channel-telegram',
+    title: 'Telegram transport and local pairing control',
+    mode: 'core',
+    consumers: ['ui-settings-channel-telegram'],
+    note: 'Uses outbound Bot API long polling, exact private-chat identity, and a loopback-only two-step pairing Remote; it never exposes the Host API or a public listener.',
+  },
+  {
     key: 'spillStore',
     pkg: 'spill',
     title: 'Spill storage seam',

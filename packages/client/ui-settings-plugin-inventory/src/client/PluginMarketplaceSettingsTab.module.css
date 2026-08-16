@@ -580,6 +580,9 @@
 }
 
 .templateFile pre {
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+
   max-height: 220px;
   margin: 0;
   overflow: auto;

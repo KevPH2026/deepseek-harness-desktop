@@ -41,6 +41,8 @@ The browser side of the dsh web GUI: shell boot, browser-host communication, sha
 | [`ui-settings/`](ui-settings/README.md) | Hosts the settings interface and its extension areas. |
 | [`ui-settings-general/`](ui-settings-general/README.md) | Provides the general settings section. |
 | [`ui-settings-about-community/`](ui-settings-about-community/README.md) | Provides unofficial community attribution and support links. |
+| [`ui-settings-channel-telegram/`](ui-settings-channel-telegram/README.md) | Provides loopback-only Telegram Bot setup, pairing confirmation, status, and revocation. |
+| [`ui-settings-profile/`](ui-settings-profile/README.md) | Provides loopback-only optional profile onboarding and per-field Agent visibility controls. |
 | [`ui-settings-models/`](ui-settings-models/README.md) | Provides model-provider configuration and DeepSeek onboarding. |
 | [`ui-settings-plugin-inventory/`](ui-settings-plugin-inventory/README.md) | Contributes the read-only Host Loader inventory tab to Plugins settings. |
 

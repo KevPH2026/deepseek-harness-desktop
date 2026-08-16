@@ -41,6 +41,8 @@ dsh web GUI 的浏览器侧：shell 启动、浏览器与宿主通信、共享 U
 | [`ui-settings/`](ui-settings/README.md) | 承载设置界面及其扩展区域。 |
 | [`ui-settings-general/`](ui-settings-general/README.md) | 提供常规设置分区。 |
 | [`ui-settings-about-community/`](ui-settings-about-community/README.md) | 提供非官方社区版归属信息与支持入口。 |
+| [`ui-settings-channel-telegram/`](ui-settings-channel-telegram/README.md) | 提供仅限本机的 Telegram Bot 设置、配对确认、状态和撤销入口。 |
+| [`ui-settings-profile/`](ui-settings-profile/README.md) | 提供仅限本机的可选资料引导与逐字段 Agent 可见性控制。 |
 | [`ui-settings-models/`](ui-settings-models/README.md) | 提供模型提供方配置与 DeepSeek 配置引导。 |
 | [`ui-settings-plugin-inventory/`](ui-settings-plugin-inventory/README.md) | 向“插件”设置贡献只读的 Host Loader 清单标签页。 |
 

@@ -125,6 +125,29 @@ const PRIVILEGED_METHODS = new Set([
   'pluginMarketplace.prepareImport',
   'pluginMarketplace.confirmImport',
   'pluginMarketplace.resources',
+  // Typert remotes use namespace/method endpoint names on the wire. Keep the
+  // historical dotted spellings above fenced as defense in depth, but fence
+  // the actual generated endpoints too.
+  'pluginMarketplace/catalog',
+  'pluginMarketplace/validateCatalogItem',
+  'pluginMarketplace/prepareImport',
+  'pluginMarketplace/confirmImport',
+  'pluginMarketplace/resources',
+  // Pairing controls admit an external identity that can start local work.
+  // The status projection also exposes that identity, so the whole namespace
+  // stays pinned to the desktop loopback origin.
+  'channelTelegram.status',
+  'channelTelegram.beginPairing',
+  'channelTelegram.confirmPairing',
+  'channelTelegram.enable',
+  'channelTelegram.disable',
+  'channelTelegram.revoke',
+  'channelTelegram/status',
+  'channelTelegram/beginPairing',
+  'channelTelegram/confirmPairing',
+  'channelTelegram/enable',
+  'channelTelegram/disable',
+  'channelTelegram/revoke',
 ])
 
 /**

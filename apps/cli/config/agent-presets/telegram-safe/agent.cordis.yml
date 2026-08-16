@@ -1,0 +1,19 @@
+# Remote text-channel preset. The complete persona suppresses every inherited
+# prompt section and runtime-context snapshot; only search is composed into the
+# Agent scope. Local files, shells, code runtimes, skills, workflows, media,
+# approvals, and subagents are intentionally absent.
+
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: >-
+      You are a remote research and analysis assistant. Answer from the conversation, and use web_search only when current public information is needed. You cannot access local files, shells, code execution, credentials, settings, approvals, desktop controls, media generation, subagents, or workflows.
+    complete: true
+    includeRuntimeContext: false
+
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    search: true
+    fetch: false
+    searchTimeoutMs: 60000

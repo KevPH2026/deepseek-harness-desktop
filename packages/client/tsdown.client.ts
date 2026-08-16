@@ -10,7 +10,7 @@
  */
 import { readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { basename, dirname, relative, resolve as resolvePath, sep } from 'node:path'
+import { basename, dirname, isAbsolute, relative, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { UserConfig } from 'tsdown'
 import { transform } from 'lightningcss'
@@ -23,6 +23,26 @@ import { PLATFORM_MODULES } from './web/src/platform.ts'
  */
 const CSS_VIRTUAL_PREFIX = '\0dsh-css:'
 const CSS_VIRTUAL_SUFFIX = '.mjs'
+
+/**
+ * Region comments and sourcemap module names expose the virtual id verbatim,
+ * so workspace stylesheets must be identified by their repository-relative
+ * path — an absolute id would ship the build machine's home directory inside
+ * every client bundle. Test fixtures outside the checkout keep absolute ids;
+ * they never reach a packaged artifact.
+ */
+function cssVirtualPath(absolutePath: string): string {
+  // REPOSITORY_ROOT derives from a directory URL and keeps its trailing separator.
+  const repositoryRelative = relative(REPOSITORY_ROOT, absolutePath)
+  return repositoryRelative.startsWith('..') || isAbsolute(repositoryRelative)
+    ? absolutePath
+    : repositoryRelative
+}
+
+/** Inverse of {@link cssVirtualPath}: repository-relative ids resolve inside the checkout. */
+function cssPhysicalPath(virtualPath: string): string {
+  return resolvePath(REPOSITORY_ROOT, virtualPath)
+}
 
 /**
  * Wire/type layers a client bundle may inline: browser-safe contracts
@@ -228,11 +248,13 @@ function clientConfig(id: string, entry: string): UserConfig {
       resolveId(source: string, importer: string | undefined) {
         if (!source.endsWith('.module.css')) return null
         const abs = importer !== undefined ? sourceAssetPath(source, importer) : source
-        return CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
+        return CSS_VIRTUAL_PREFIX + cssVirtualPath(abs) + CSS_VIRTUAL_SUFFIX
       },
       async load(virtualId: string) {
         if (!virtualId.startsWith(CSS_VIRTUAL_PREFIX)) return null
-        const fileId = virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
+        const fileId = cssPhysicalPath(
+          virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length),
+        )
         // The virtual id otherwise hides the physical stylesheet from Rolldown's watch graph.
         this.addWatchFile(fileId)
         const source = await readFile(fileId)

@@ -14,6 +14,7 @@
 | [goal.md](goal.md) | 持久 goal 标识、生命周期快照、激活、变更记录与 Round 归属 |
 | [schedule.md](schedule.md) | 仅限 Session 内的提醒记录、持久转换、活动视图与普通对话交付 |
 | [commands.md](commands.md) | 人类命令注册表服务：定义、适配器发现、直接调用、结果与解析视图 |
+| [channels.md](channels.md) | 已认证文本接入、持久 Agent 消费，以及 Telegram 配对、offset 与投递 |
 | [session.md](session.md) | 完整的 `SessionEventMap` 变体目录、`TurnTrigger`/`TurnEndReason`、`deriveMessages()`、执行封闭与独立事件 |
 | [persistence.md](persistence.md) | 持久性 seam：`SessionPersistence`、JSONL + SQLite 后端、`session/flush`、崩溃恢复、`SessionHeader` |
 | [settings.md](settings.md) | 用户设置 seam：`SettingsNamespace` 注册、分层解析（默认值 → 组合 `base` → 用户文档）、owner scope、热提交 |

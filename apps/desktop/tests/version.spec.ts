@@ -15,10 +15,11 @@ describe('desktop version surfaces', () => {
     const bundleShortVersion = quotedYamlValue(builder, 'bundleShortVersion')
     const bundleVersion = quotedYamlValue(builder, 'bundleVersion')
 
-    expect(updaterVersion).toBe('0.1.0-beta.1')
+    expect(updaterVersion).toBe('0.1.0-beta.2')
     expect(await readDesktopUpdaterVersion(desktopRoot)).toBe(updaterVersion)
     expect(bundleShortVersion).toBe(desktopBundleShortVersion(updaterVersion))
     expect(bundleShortVersion).toMatch(/^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){2}$/)
+    expect(bundleVersion).toBe('2')
     expect(bundleVersion).toMatch(/^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){0,2}$/)
   })
 

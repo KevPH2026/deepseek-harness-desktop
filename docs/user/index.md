@@ -3,7 +3,7 @@ layout: home
 hero:
   name: DeepSeek Harness Desktop
   text: From agent conversation to finished work
-  tagline: A community macOS workspace for coding, tools, smart media generation, and scenario-based plugins.
+  tagline: A community macOS workspace for coding, tools, smart media generation, paired Telegram control, and scenario-based plugins.
   image:
     src: /favicon.svg
     alt: DeepSeek Harness icon
@@ -21,6 +21,9 @@ features:
   - icon: 🎨
     title: Smart multimodal tools
     details: Let the agent request configured image or video generation only when the deliverable needs it.
+  - icon: 📱
+    title: Telegram phone control
+    details: Pair one private account on the desktop, send tasks from your phone, and receive the final Agent response in the same chat.
   - icon: 🧩
     title: Community plugins
     details: Discover by scenario, inspect trust signals, validate selected repositories, and review import risks while installation remains disabled.
@@ -46,6 +49,10 @@ Code, research, writing, images, and video often belong to the same deliverable.
 ## Extend by scenario, with trust visible
 
 The plugin marketplace organizes community projects for design, programming, writing, model providers, gateways, and other workflows. Discovery starts from the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic. Only a selected repository that passes pinned manifest and patch-target validation is labeled compatible; compatibility does not enable installation. The beta accepts GitHub, npm, and local source drafts for risk review, but does not execute imports.
+
+## Keep a task moving from Telegram
+
+Create a dedicated Bot with BotFather, save its token in the desktop credential store, and generate a ten-minute single-use pairing link. Opening the link on the phone creates a candidate; the account is not trusted until you return to the desktop and confirm its exact numeric user and private-chat IDs. After pairing, ordinary text starts or continues a `telegram-safe` session and the final response returns to Telegram. This phone Agent supports plain-text reasoning and `web_search`; it cannot read local files or credentials, run Shell or code, call paid media tools, use subagents, change permissions, or approve operations. Bot chats are not end-to-end encrypted, so never send secrets.
 
 ## Updates that follow releases, not noise
 

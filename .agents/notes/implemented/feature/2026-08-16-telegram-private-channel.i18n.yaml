@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-16-telegram-private-channel.md
+2026-08-16-telegram-private-channel.md: 2a46f2e1f448c738664f1bda029edc1d63a04560
+2026-08-16-telegram-private-channel.zh.md: 610c1e8ad420ba7f379ba57ea60761dfcb4ff471

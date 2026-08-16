@@ -5,6 +5,7 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { clientBundle } from '../packages/client/tsdown.client.ts'
 
@@ -48,5 +49,19 @@ describe('client bundle CSS Modules', () => {
     } finally {
       await rm(root, { recursive: true, force: true })
     }
+  })
+
+  it('identifies workspace stylesheets by repository-relative ids so bundles never embed the checkout path', () => {
+    const importer = fileURLToPath(new URL(
+      '../packages/client/ui-conversation/src/client/queue/QueueDock.tsx',
+      import.meta.url,
+    ))
+    const plugin = cssPlugin()
+
+    const virtualId = plugin.resolveId?.('./QueueDock.module.css', importer)
+
+    expect(virtualId).toBe(
+      '\0dsh-css:packages/client/ui-conversation/src/client/queue/QueueDock.module.css.mjs',
+    )
   })
 })

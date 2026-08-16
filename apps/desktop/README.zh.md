@@ -81,6 +81,42 @@ ZIP blockmap 及生成的 `latest-mac.yml`；macOS 自动更新需要 ZIP 和更
 
 首个桌面版本的双语说明以 [CHANGELOG.md](CHANGELOG.md) 为单一真源。
 
+## Telegram 手机控制
+
+桌面端可以把一个 Telegram 私聊账号绑定到专用 Bot，全程不需要开放 Harness 公网端口：
+
+1. 通过 Telegram 的 `@BotFather` 创建一个专用 Bot，并复制 Token。
+2. 打开“设置 → Telegram 远程控制”，保存 Token 并启用通道。
+3. 生成十分钟内单次有效的绑定链接，再用手机打开。
+4. 回到电脑，核对 Telegram 用户数字 ID 与私聊数字 ID，然后批准该候选账号。
+5. 在 Bot 私聊中直接发送任务文字，或使用 `/new`、`/sessions`、`/use`、
+   `/status`、`/stop` 和 `/help`。
+
+关闭窗口后，托盘进程和 Telegram 出站长轮询仍会运行。明确退出应用、电脑休眠、
+网络中断或 Mac 关机后，手机通道都会离线。手机任务始终使用独立的
+`telegram-safe` 预设，只提供文字推理与 `web_search`。单调执行 Guard 会阻止本地
+文件、Shell、代码执行、凭据、设置、审批、付费媒体工具、子代理、工作流和原始 Host
+RPC；即使其他插件之后注册新工具，也无法由 Telegram 调用。Telegram 不能修改这套
+预设或其 `read-only` 权限。
+
+通道停用期间，电脑不会执行手机消息。如果 Telegram 报告仍有积压更新，客户端会保持
+停用，既不执行、不确认、不推进更新 offset，也不会清空这些消息。可以继续停用，等待
+Telegram 在最长 24 小时的保留期内让这些更新过期；也可以撤销绑定、移除 Token，
+再绑定一个新的专用 Bot。
+
+任务结果完成后会进入持久待发队列（outbox）。临时离线或 Bot API 故障会按指数退避持续
+补发，但不会重跑 Agent 提示。更换 Bot 或回复超过三个 Telegram 消息分段时，该次投递会
+永久停止。投递采用至少一次语义：如果 Telegram 已接收消息，而应用在保存本地标记前
+崩溃，恢复后可能重复发送一条消息。
+
+Bot Token 由现有的仅限本机账户访问的凭据提供方保存，不会写入普通设置、通道存储、
+会话消息或 Remote 返回值。这里不是操作系统 Keychain 边界：以同一本机用户身份运行的
+其他进程仍可能读取凭据文件。请使用专用 Bot，不要在聊天里发送秘密；如果怀疑 Token
+泄露，请立即在 BotFather 中撤销或轮换。
+
+Telegram Bot 聊天没有端到端加密。Telegram 能够处理发送给 Bot 的消息，已接纳任务也
+可能消耗模型或搜索额度。
+
 ## 安全与生命周期
 
 渲染器关闭 Node 集成，开启上下文隔离、Chromium 沙箱和 Web 安全。页面只能在分配给 Harness 的来源内导航；HTTP 和 HTTPS 链接交给操作系统浏览器打开，其他协议全部拒绝。
@@ -104,8 +140,9 @@ Web 传输层只监听回环地址。桌面进程不会向渲染器暴露通用�
 在 macOS 上加载 HMR 服务时需要这个参数。
 
 桌面 manifest 同时显式拥有对等依赖闭合的 Harness 运行时根目录。部署前必须通过
-`npm run desktop:verify-runtime`；自动安装对等依赖保持关闭，让缺失的打包依赖在构建时失败，
-不会等到用户机器上才暴露。Staging 步骤还会恢复 pnpm legacy deploy 遗漏的提升依赖，
-并把 vendored `link:` 包实体化，最终不留下指向源码 checkout 的包软链接。
+`npm run desktop:verify-runtime`，让缺失的打包依赖在构建时失败，不会等到用户机器上
+才暴露。生产 Staging 严格使用仓库提交的冻结锁文件解析依赖，跳过依赖安装脚本，并把
+workspace 包注入部署目录。最后一步会补回任何遗漏的直接依赖并实体化残余包链接，最终
+不留下指向源码 checkout 的包软链接。
 
 首个安装包让 Harness 运行时保持在 ASAR 之外，因为 Profile 回退链接、动态插件、Worker、原生模块和 `node-pty` Helper 需要真实文件系统路径。未来的 `file://` 渲染器需要为普通调用、流、客户端模块和取消操作实现完整 IPC 传输层；在该传输层完成前继续使用 Web 传输层。

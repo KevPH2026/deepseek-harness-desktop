@@ -3,7 +3,7 @@ layout: home
 hero:
   name: DeepSeek Harness Desktop
   text: 从 agent 对话走到真正完成
-  tagline: 面向编程、工具、智能媒体生成和场景化插件的社区 macOS 工作区。
+  tagline: 面向编程、工具、智能媒体生成、Telegram 手机控制和场景化插件的社区 macOS 工作区。
   image:
     src: /favicon.svg
     alt: DeepSeek Harness 图标
@@ -21,6 +21,9 @@ features:
   - icon: 🎨
     title: 智能多模态工具
     details: 只有当交付物确实需要时，agent 才会请求已配置的图片或视频生成能力。
+  - icon: 📱
+    title: Telegram 手机控制
+    details: 在电脑上绑定一个私聊账号，从手机发送任务，并在同一聊天里收到 Agent 的最终回复。
   - icon: 🧩
     title: 社区插件
     details: 按场景发现插件、检查信任信息、验证所选仓库，并在安装保持关闭时查看导入风险。
@@ -46,6 +49,10 @@ DeepSeek Harness Desktop 把完整 Harness Web 体验封装进受监管的 macOS
 ## 按场景扩展，信任信息清晰可见
 
 插件市场会按设计、编程、文案、模型提供方、网关和其他工作流组织社区项目。发现从 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 话题开始。只有在固定提交上的 manifest 与 patch 目标验证通过后，所选仓库才会被标为兼容；兼容不代表已开放安装。当前 Beta 可填写 GitHub、npm 和本地来源草稿以查看风险，但不会执行导入。
+
+## 通过 Telegram 继续安排任务
+
+先通过 BotFather 创建一个专用 Bot，把 Token 保存到桌面端凭据库，再生成十分钟内单次有效的绑定链接。在手机上打开链接后只会产生一个候选账号；必须回到电脑核对并确认准确的用户数字 ID 和私聊数字 ID，绑定才会生效。完成绑定后，直接发送文字即可新建或继续 `telegram-safe` 会话，最终回复会回到 Telegram。手机 Agent 只提供文字推理与 `web_search`，不能读取本地文件或凭据、运行 Shell 或代码、调用付费媒体工具、使用子代理、修改权限或批准操作。Bot 聊天没有端到端加密，请勿发送秘密。
 
 ## 更新跟随 Release，不跟随噪音
 

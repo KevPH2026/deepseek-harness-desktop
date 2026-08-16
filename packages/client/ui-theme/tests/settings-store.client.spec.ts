@@ -10,8 +10,8 @@ describe('createAppearanceRowStore', () => {
 
   it('sync mirrors the preference and advances the revision', () => {
     const store = createAppearanceRowStore().create()
-    store.actions.sync('dark', 0)
-    expect(store.getSnapshot()).toEqual({ preference: 'dark', revision: 0 })
+    store.actions.sync('aurora-night', 0)
+    expect(store.getSnapshot()).toEqual({ preference: 'aurora-night', revision: 0 })
     store.actions.sync('light', 2)
     expect(store.getSnapshot().preference).toBe('light')
     expect(store.getSnapshot().revision).toBe(2)

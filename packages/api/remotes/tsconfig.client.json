@@ -40,6 +40,9 @@
       "path": "../../host/plugin-marketplace"
     },
     {
+      "path": "../../interaction/channel-telegram"
+    },
+    {
       "path": "../../interaction/commands"
     },
     {

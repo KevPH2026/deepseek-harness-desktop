@@ -180,6 +180,15 @@ describe('connection node half', () => {
       'pluginMarketplace.catalog', 'pluginMarketplace.validateCatalogItem',
       'pluginMarketplace.prepareImport', 'pluginMarketplace.confirmImport',
       'pluginMarketplace.resources',
+      'channelTelegram.status', 'channelTelegram.beginPairing',
+      'channelTelegram.confirmPairing', 'channelTelegram.enable',
+      'channelTelegram.disable', 'channelTelegram.revoke',
+      'pluginMarketplace/catalog', 'pluginMarketplace/validateCatalogItem',
+      'pluginMarketplace/prepareImport', 'pluginMarketplace/confirmImport',
+      'pluginMarketplace/resources',
+      'channelTelegram/status', 'channelTelegram/beginPairing',
+      'channelTelegram/confirmPairing', 'channelTelegram/enable',
+      'channelTelegram/disable', 'channelTelegram/revoke',
     ]) {
       const denied = fakeResponse()
       await routes[0]!.handler(
@@ -477,6 +486,12 @@ describe('connection node half over a real HTTP server', () => {
         'pluginMarketplace.catalog', 'pluginMarketplace.validateCatalogItem',
         'pluginMarketplace.prepareImport', 'pluginMarketplace.confirmImport',
         'pluginMarketplace.resources',
+        'pluginMarketplace/catalog', 'pluginMarketplace/validateCatalogItem',
+        'pluginMarketplace/prepareImport', 'pluginMarketplace/confirmImport',
+        'pluginMarketplace/resources',
+        'channelTelegram/status', 'channelTelegram/beginPairing',
+        'channelTelegram/confirmPairing', 'channelTelegram/enable',
+        'channelTelegram/disable', 'channelTelegram/revoke',
       ]) {
         expect([method, await call(port, method, 'harness.example')]).toEqual([method, 403])
       }

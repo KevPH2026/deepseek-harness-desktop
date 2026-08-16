@@ -30,6 +30,7 @@ const WEB_PATCH = join(REPO_ROOT, 'packages/bundle/web-app/cordis.patch.yml')
 const INSTALL_ANCHOR = join(REPO_ROOT, 'apps/cli/package.json')
 const EXAMPLES_INSTALL_ANCHOR = join(REPO_ROOT, 'examples/package.json')
 const MINIMAL_PROMPT = 'You are a helpful software engineer assistant.'
+const TELEGRAM_SAFE_PROMPT = 'You are a remote research and analysis assistant. Answer from the conversation, and use web_search only when current public information is needed. You cannot access local files, shells, code execution, credentials, settings, approvals, desktop controls, media generation, subagents, or workflows.'
 const MINIMAL_BASH_DESCRIPTION = `Run commands in a bash shell
 * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
 * You don't have access to the internet via this tool.
@@ -184,10 +185,11 @@ describe('the shipped Web composition', () => {
     }
   })
 
-  it('supplies both shipped presets, and only those, from the system root', async () => {
+  it('supplies every shipped preset, and only those, from the system root', async () => {
     const listed = await ctx.agentPresets.list()
 
-    expect(listed.map(preset => preset.id).sort()).toEqual(['code', 'cordis', 'minimal', 'standard'])
+    expect(listed.map(preset => preset.id).sort())
+      .toEqual(['code', 'cordis', 'minimal', 'standard', 'telegram-safe'])
     expect(listed.every(preset => preset.trust === 'system')).toBe(true)
     expect(ctx.agentPresets.defaultId).toBe('standard')
   })
@@ -230,6 +232,28 @@ describe('the shipped Web composition', () => {
         .toContain('Absolute path')
       expect(ctx.agentPresets.serviceFor(handle.agent, 'compaction')).toBeUndefined()
       expect(handle.agent.ctx.get('compaction')).toBeUndefined()
+    } finally {
+      await handle.dispose()
+    }
+  })
+
+  it('composes `telegram-safe` with an exact prompt and only web_search', async () => {
+    const handle = await ctx.agents.create({
+      sessionId: SessionId('preset-telegram-safe'),
+      setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'telegram-safe').then(() => undefined),
+    })
+    try {
+      const assembly = await ctx.systemPrompt.assemble({ scope: handle.agent })
+      expect(assembly.sections).toEqual([
+        { name: 'deployment:persona', text: TELEGRAM_SAFE_PROMPT },
+      ])
+      expect(assembly.tools.map(tool => tool.name)).toEqual(['web_search'])
+      expect(toolNames(ctx, handle.agent)).toEqual(['web_search'])
+      expect(toolNames(ctx, handle.agent)).not.toEqual(expect.arrayContaining([
+        'ask_user_question', 'bash', 'edit', 'generate_image', 'read', 'run_code',
+        'skill', 'subagent', 'workflow', 'write',
+      ]))
+      expect(ctx.agentPresets.serviceFor(handle.agent, 'compaction')).toBeUndefined()
     } finally {
       await handle.dispose()
     }

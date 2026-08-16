@@ -387,6 +387,34 @@ Depends on: [`LocalConfig`](#deepseek-aidsh-bash-local)
 
 Source: [`packages/shell/bash-sandbox/src/index.ts:35`](../packages/shell/bash-sandbox/src/index.ts)
 
+<a id="deepseek-aidsh-channel-agent"></a>
+
+## `@deepseek-ai/dsh-channel-agent`
+
+Requires: `agentDefaultModel` · `agentPresets` · `agents` · `channel` · `permissionPresets` · `sessionPersistence` · `sessions` · `storageDomain` · `tools` · `workspaceRegistry`
+
+```ts config-catalog
+/** Local-only policy; channel messages cannot change any field. */
+export interface Config {
+  /** Existing workspace assigned to channel sessions; omitted selects the first registered workspace at admission time. */
+  readonly workspaceId?: string
+  /** Fixed remote-safe Agent preset. Other presets are rejected at configuration validation. */
+  readonly agentPreset?: 'telegram-safe'
+  /** Fixed read-only permission preset pinned before every channel prompt. */
+  readonly permissionPreset?: 'read-only'
+  /** Maximum UTF-8 bytes accepted in one model prompt. */
+  readonly maxInputBytes?: number
+  /** Maximum sessions retained by one provider/conversation/sender identity. */
+  readonly maxSessionsPerConversation?: number
+  /** Delay before retrying a temporarily unavailable outbound delivery. */
+  readonly deliveryRetryInitialMs?: number
+  /** Maximum retained interval for temporarily unavailable outbound deliveries. */
+  readonly deliveryRetryMaxMs?: number
+}
+```
+
+Source: [`packages/interaction/channel-agent/src/config.ts:8`](../packages/interaction/channel-agent/src/config.ts)
+
 <a id="deepseek-aidsh-client-connection"></a>
 
 ## `@deepseek-ai/dsh-client-connection`
@@ -3143,6 +3171,8 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-agent` ([`packages/core/agent/src/index.ts`](../packages/core/agent/src/index.ts))
 - `@deepseek-ai/dsh-api-gateway` — requires `typert` ([`packages/api/gateway/src/index.ts`](../packages/api/gateway/src/index.ts))
 - `@deepseek-ai/dsh-api-remotes` ([`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts))
+- `@deepseek-ai/dsh-channel` ([`packages/interaction/channel/src/index.ts`](../packages/interaction/channel/src/index.ts))
+- `@deepseek-ai/dsh-channel-telegram` — requires `channel` · `credentials` · `storageDomain` ([`packages/interaction/channel-telegram/src/index.ts`](../packages/interaction/channel-telegram/src/index.ts))
 - `@deepseek-ai/dsh-client-locale` ([`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts))
 - `@deepseek-ai/dsh-client-modules` — requires `webServer` · `loader` ([`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts))
 - `@deepseek-ai/dsh-client-runtime` ([`packages/client/runtime/src/index.ts`](../packages/client/runtime/src/index.ts))
@@ -3163,10 +3193,12 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-client-ui-plan` ([`packages/client/ui-plan/src/index.ts`](../packages/client/ui-plan/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings` ([`packages/client/ui-settings/src/index.ts`](../packages/client/ui-settings/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-about-community` ([`packages/client/ui-settings-about-community/src/index.ts`](../packages/client/ui-settings-about-community/src/index.ts))
+- `@deepseek-ai/dsh-client-ui-settings-channel-telegram` ([`packages/client/ui-settings-channel-telegram/src/index.ts`](../packages/client/ui-settings-channel-telegram/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-general` ([`packages/client/ui-settings-general/src/index.ts`](../packages/client/ui-settings-general/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-models` ([`packages/client/ui-settings-models/src/index.ts`](../packages/client/ui-settings-models/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-plugin-inventory` ([`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-plugins` ([`packages/client/ui-settings-plugins/src/index.ts`](../packages/client/ui-settings-plugins/src/index.ts))
+- `@deepseek-ai/dsh-client-ui-settings-profile` ([`packages/client/ui-settings-profile/src/index.ts`](../packages/client/ui-settings-profile/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-sidebar` ([`packages/client/ui-sidebar/src/index.ts`](../packages/client/ui-sidebar/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-skill` ([`packages/client/ui-skill/src/index.ts`](../packages/client/ui-skill/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-subagent` ([`packages/client/ui-subagent/src/index.ts`](../packages/client/ui-subagent/src/index.ts))
@@ -3204,6 +3236,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-tool-call-timeout-policy` — requires `tools` ([`packages/guard/timeout-policy/src/index.ts`](../packages/guard/timeout-policy/src/index.ts))
 - `@deepseek-ai/dsh-tool-cordis` — requires `tools` · `systemPrompt` · `dynamicCordisRunner` · `cordisInspect` ([`packages/extensions/tool-cordis/src/index.ts`](../packages/extensions/tool-cordis/src/index.ts))
 - `@deepseek-ai/dsh-tool-subagent-control` — requires `tools` · `subagents` ([`packages/subagent/tool-subagent-control/src/index.ts`](../packages/subagent/tool-subagent-control/src/index.ts))
+- `@deepseek-ai/dsh-user-profile` — requires `settings` · `systemPrompt` ([`packages/context/user-profile/src/index.ts`](../packages/context/user-profile/src/index.ts))
 - `@deepseek-ai/dsh-user-questions` ([`packages/interaction/user-questions/src/index.ts`](../packages/interaction/user-questions/src/index.ts))
 - `@deepseek-ai/dsh-workspace` — requires `storageDomain` · `sessionPersistence` ([`packages/workspace/workspace/src/index.ts`](../packages/workspace/workspace/src/index.ts))
 

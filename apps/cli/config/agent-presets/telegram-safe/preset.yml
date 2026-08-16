@@ -1,0 +1,3 @@
+name: Telegram 安全模式
+description: 面向远程文本任务，仅提供纯文本推理与网页搜索，不读取本地文件，也不提供 Shell 或代码执行能力。
+order: 4
