@@ -130,6 +130,25 @@ function props(
     catalog,
     resources: vi.fn(async () => RESOURCES),
     validateCatalogItem,
+    curatedBundleStatus: vi.fn(async () => ({
+      package: '@linxin666/dsh-web-ui-all',
+      installed: false,
+      version: undefined,
+    })),
+    installCuratedBundle: vi.fn(async () => ({
+      ok: true,
+      installed: true,
+      requiresRestart: true,
+      errorCode: undefined,
+      detail: undefined,
+    })),
+    uninstallCuratedBundle: vi.fn(async () => ({
+      ok: true,
+      installed: false,
+      requiresRestart: true,
+      errorCode: undefined,
+      detail: undefined,
+    })),
   } as unknown as PluginMarketplaceSettingsTabProps
 }
 

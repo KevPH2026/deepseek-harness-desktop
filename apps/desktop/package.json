@@ -15,7 +15,7 @@
     "url": "git+https://github.com/KevPH2026/deepseek-harness-desktop.git",
     "directory": "apps/desktop"
   },
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "private": true,
   "type": "module",
   "main": "lib/main.js",

@@ -17,6 +17,17 @@
 
 ![DeepSeek Harness Desktop 产品动图：桌面工作区、多模态工具、插件发现与社区](docs/user/marketing/deepseek-harness-desktop-tour.zh.gif)
 
+> [!TIP]
+>
+> 🌐 产品主页：**[deepseeklab.org](https://deepseeklab.org)** —— 功能导览、皮肤展示与微信用户群（二维码见下方社区区）。
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/user/marketing/desktop-theme-center.png" alt="内置皮肤中心：深海蓝、极光夜、暖纸" loading="lazy"></td>
+    <td width="50%"><img src="docs/user/marketing/desktop-telegram-remote.png" alt="Telegram 远程控制设置，支持代理" loading="lazy"></td>
+  </tr>
+</table>
+
 > [!IMPORTANT]
 >
 > DeepSeek Harness Desktop 是由 [@KevPH2026](https://github.com/KevPH2026) 维护的**非官方社区版**。它基于开源 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 项目，不是 DeepSeek 官方桌面产品，也不代表官方背书。
@@ -62,6 +73,15 @@ DeepSeek Harness 已经提供了强大的插件化 agent harness（智能体框�
 - Mac 仍然只监听 `127.0.0.1`。Telegram 采用电脑主动发起的长轮询，不会把 Harness Web API 变成公网服务。
 - 手机任务使用独立的 `telegram-safe` Agent 预设，只提供文字推理与 `web_search`。本地文件、Shell、代码执行、凭据、设置、审批、付费媒体工具、子代理、工作流和原始 RPC 均不可用。
 - 单调执行 Guard 会持续守住这条能力边界；即使其他 Host 插件之后注册新工具，也无法由 Telegram 任务调用。Telegram 不能修改预设或权限。
+
+### 一键安装的精选社区增强包
+
+- 插件市场内置精选全家桶，来自 **@linxin666** 的 [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)（Apache-2.0）：Git 图谱、右侧文件/变更面板、皮肤中心（含多款皮肤）、图像理解、梁神模式预设和鲸鱼娘桌面宠物。
+- 在明确的风险确认后，通过官方 profile 机制一键安装、一键卸载。SSH 运维、任务看板、社区插件中心、移动端远程与实时令牌估算被刻意排除；任意市场插件的安装路径保持默认关闭。
+
+### 可点击的用量面板
+
+- 输入框下方统计条可点击展开完整用量面板：未缓存输入、缓存读取、缓存写入、输出、计费输入合计、总 Token、缓存命中率、上下文占用与速度指标 —— 全部来自提供商上报的持久账目，不做估算。
 
 ### 社区插件市场
 
@@ -119,6 +139,11 @@ npm run desktop:pack:mac
 
 ## 反馈与社区
 
+- 🌐 完整功能导览的产品主页：[deepseeklab.org](https://deepseeklab.org)
+- 💬 微信用户群（扫码加入，新版本与使用技巧第一时间发布）：
+
+  <img src="docs/user/marketing/community-wechat-group.jpg" width="220" alt="微信用户群二维码">
+
 - 遇到 Bug 或有功能建议？[创建反馈 Issue](https://github.com/KevPH2026/deepseek-harness-desktop/issues/new/choose)。
 - 正在开发 Harness 插件？请添加 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 话题，并遵循[插件发布指南](docs/user/develop/basic/publish.md)。
 - 希望展示提供方优惠或讨论真实合作？仓库上线后，请使用专门的提供方申请模板。
@@ -129,6 +154,8 @@ npm run desktop:pack:mac
 桌面版处于 Beta 阶段，上游 Harness 仍处于开发者预览阶段，可能出现破坏兼容性的变更。首个打包目标是 Apple Silicon Mac；其他平台需要完成独立打包和运行时验证后才会被列为受支持平台。
 
 ## 归属与许可证
+
+精选社区增强包集成自 **@zhu1090093659（@linxin666）** 的 [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)（Apache-2.0）—— 特别感谢作者带来的优秀插件合集。
 
 DeepSeek Harness 保留原始 `Copyright (c) 2026 DeepSeek` 版权声明。桌面封装与社区功能由 [@KevPH2026](https://github.com/KevPH2026) 维护，并按照上游 [MIT 许可证](LICENSE)分发。捆绑依赖的许可证见[第三方声明](THIRD_PARTY_NOTICES.md)。
 

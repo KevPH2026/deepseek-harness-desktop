@@ -2,7 +2,7 @@
 // Mounted on 'conversation.composer.dock' so it sticks with the composer in the
 // active conversation scrollport (see ConversationRoot data-conversation-scroll).
 
-import { Fragment, memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ConversationSnapshot, UseProjection } from '@deepseek-ai/dsh-client-runtime/client'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
@@ -163,6 +163,8 @@ export interface StatsLineProps {
 export const StatsLine = memo(function StatsLine({ useSession, useProjection, t }: StatsLineProps) {
   const settledNodes = useSession(s => s.chat.legacy.nodes)
   const usage = useProjection('tokenUsage')
+  const pressure = useProjection('contextPressure')
+  const [detailOpen, setDetailOpen] = useState(false)
   // Every figure rides the durable sessionStats projection, so paging and
   // compaction cannot change any of them; an assembly without the unit falls
   // back to the window-scoped fold wholesale (same field names), paid only
@@ -219,9 +221,88 @@ export const StatsLine = memo(function StatsLine({ useSession, useProjection, t 
     return () => { observer.disconnect() }
   }, [line])
   if (groups.length === 0) return null
+  const occupancy = contextOccupancy(pressure)
+  const detail = usage === undefined ? undefined : {
+    uncached: usage.uncachedInputTokens,
+    cacheRead: usage.cacheReadTokens,
+    cacheWrite: usage.cacheWriteTokens,
+    output: usage.outputTokens,
+    billed: billedInputTokens(usage),
+    total: billedInputTokens(usage) + usage.outputTokens,
+    hit: cacheHitPercent(usage),
+  }
+  const hasDetail = detail !== undefined && (detail.total > 0 || stats.steps > 0)
   return (
-    <Tooltip label={line} side="top" delayMs={500} disabled={!truncated}>
-      <div ref={rootRef} className={css.root}>
+    <Tooltip label={line} side="top" delayMs={500} disabled={!truncated || detailOpen}>
+      <div
+        ref={rootRef}
+        className={css.root}
+        {...(hasDetail ? {
+          role: 'button' as const,
+          tabIndex: 0,
+          'aria-expanded': detailOpen,
+          'aria-haspopup': 'dialog' as const,
+          onClick: () => { setDetailOpen(open => !open) },
+          onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              setDetailOpen(open => !open)
+            }
+          },
+        } : {})}
+        data-detail-open={detailOpen}
+      >
+        {detailOpen && hasDetail ? (
+          <div className={css.detail} role="dialog" aria-label={t('stats.detailTitle')}>
+            <strong className={css.detailTitle}>{t('stats.detailTitle')}</strong>
+            <span className={css.detailScope}>{t('stats.detailSession')}</span>
+            {detail === undefined ? null : (
+              <dl className={css.detailGrid}>
+                <div><dt>{t('stats.detailInputUncached')}</dt><dd>{formatTokens(detail.uncached)}</dd></div>
+                <div><dt>{t('stats.detailCacheRead')}</dt><dd>{formatTokens(detail.cacheRead)}</dd></div>
+                <div><dt>{t('stats.detailCacheWrite')}</dt><dd>{formatTokens(detail.cacheWrite)}</dd></div>
+                <div><dt>{t('stats.detailOutput')}</dt><dd>{formatTokens(detail.output)}</dd></div>
+                <div><dt>{t('stats.detailBilledInput')}</dt><dd>{formatTokens(detail.billed)}</dd></div>
+                <div className={css.detailEmphasis}><dt>{t('stats.detailTotal')}</dt><dd>{formatTokens(detail.total)}</dd></div>
+                {detail.hit === null ? null : (
+                  <div><dt>{t('stats.detailCacheHit')}</dt><dd>{detail.hit}%</dd></div>
+                )}
+              </dl>
+            )}
+            {occupancy === null ? null : (
+              <p className={css.detailRow}>
+                {t('stats.detailContext')}:{' '}
+                <strong>{formatTokens(occupancy.usedTokens)} / {formatTokens(occupancy.contextWindow)}</strong>
+                {' '}({occupancy.percent}%)
+              </p>
+            )}
+            <p className={css.detailRow}>
+              {t('stats.detailCounts')}: <strong>{stats.turns} / {stats.steps}</strong>
+            </p>
+            <p className={css.detailRow}>
+              {t('stats.detailTiming')}:
+              {' '}<strong>
+                {t('stats.llm', { duration: formatDuration(stats.llmMs) })}
+                {stats.toolMs > 0 ? ` · ${t('stats.toolCall', { duration: formatDuration(stats.toolMs) })}` : ''}
+              </strong>
+            </p>
+            {stats.ttftSteps > 0 || stats.decodeMs > 0 ? (
+              <p className={css.detailRow}>
+                {t('stats.detailSpeed')}:
+                {' '}<strong>
+                  {stats.ttftSteps > 0
+                    ? t('stats.ttftAverage', { duration: formatDuration(stats.ttftMs / stats.ttftSteps) })
+                    : ''}
+                  {stats.decodeMs > 0
+                    ? ` · ${t('stats.tokensPerSecond', {
+                      throughput: formatTokensPerSecond(stats.decodeTokens / (stats.decodeMs / 1_000)),
+                    })}`
+                    : ''}
+                </strong>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         {groups.map((group, i) => (
           <Fragment key={group}>
             {i > 0 && <><span className={css.sep} aria-hidden>|</span>{' '}</>}

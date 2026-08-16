@@ -72,6 +72,27 @@ export function apply(ctx: ClientContext): void {
       }
       return result.value
     },
+    curatedBundleStatus: async () => {
+      const result = await ctx.remote.pluginMarketplace.curatedBundleStatus()
+      if (!result.ok) {
+        throw new Error('pluginMarketplace.curatedBundleStatus failed')
+      }
+      return result.value
+    },
+    installCuratedBundle: async (acknowledgedRisk) => {
+      const result = await ctx.remote.pluginMarketplace.installCuratedBundle({ acknowledgedRisk })
+      if (!result.ok) {
+        throw new Error('pluginMarketplace.installCuratedBundle failed')
+      }
+      return result.value
+    },
+    uninstallCuratedBundle: async () => {
+      const result = await ctx.remote.pluginMarketplace.uninstallCuratedBundle()
+      if (!result.ok) {
+        throw new Error('pluginMarketplace.uninstallCuratedBundle failed')
+      }
+      return result.value
+    },
   })
 
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({

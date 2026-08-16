@@ -23,6 +23,7 @@ const CONFIG: Config = {
   validationTtlMs: 60_000,
   minValidationIntervalMs: 1_000,
   validationTimeoutMs: 10_000,
+  curatedInstallTimeoutMs: 60_000,
 }
 
 /** Minimal durable-domain fake; the Gateway still owns open/close lifecycle. */
@@ -101,8 +102,11 @@ describe('PluginMarketplaceGateway', () => {
     expect(remoteMethods(gateway).map(method => method.method).sort()).toEqual([
       'catalog',
       'confirmImport',
+      'curatedBundleStatus',
+      'installCuratedBundle',
       'prepareImport',
       'resources',
+      'uninstallCuratedBundle',
       'validateCatalogItem',
     ])
     const confirmation = gateway.confirmImport({

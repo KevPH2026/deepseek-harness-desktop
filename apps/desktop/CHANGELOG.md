@@ -4,6 +4,23 @@ This changelog covers the unofficial community desktop wrapper maintained at
 [`KevPH2026/deepseek-harness-desktop`](https://github.com/KevPH2026/deepseek-harness-desktop).
 It does not describe an official DeepSeek desktop product.
 
+## 0.1.0-beta.3
+
+- Adds a curated one-click community pack to the plugin marketplace: git
+  graph, the right-side file/change panel, skin center with extra skins,
+  image understanding, the liangshen preset, and the whale pet — an
+  Apache-2.0 subset of dsh-web-ui by @linxin666, installed through the
+  official profile mechanism with explicit risk acknowledgement and one-click
+  uninstall. SSH ops, the task board, the community-plugin center, mobile
+  remote, and live token estimation are deliberately excluded.
+- The composer stats strip is now clickable and expands a full usage panel:
+  uncached input, cache-read, cache-write, output, billed input, total
+  tokens, cache-hit rate, context occupancy, and speed metrics for the
+  session.
+- Distribution: signed-release candidates continue on the GitHub Release
+  channel; this beta also publishes the unsigned Apple Silicon ZIP for early
+  adopters who accept the Gatekeeper confirmation step.
+
 ## 0.1.0-beta.2
 
 - Completes private Telegram phone control with one-time pairing, explicit
@@ -53,6 +70,17 @@ packages are verification artifacts.
 本记录对应由
 [`KevPH2026/deepseek-harness-desktop`](https://github.com/KevPH2026/deepseek-harness-desktop)
 维护的非官方社区桌面封装，不代表 DeepSeek 官方桌面产品。
+
+### 0.1.0-beta.3
+
+- 插件市场新增"精选全家桶"一键安装：Git 图谱、右侧文件/变更面板、皮肤中心（含
+  多款皮肤）、图像理解、梁神模式预设和鲸鱼娘桌面宠物。精选自 @linxin666 的
+  dsh-web-ui（Apache-2.0），通过官方 profile 机制安装，需明确的风险确认，支持一键
+  卸载；SSH 运维、任务看板、社区插件中心、移动端远程与实时令牌估算被刻意排除。
+- 输入框下方统计条现在可以点击，展开完整用量面板：未缓存输入、缓存读取、缓存
+  写入、输出、计费输入合计、总 Token、缓存命中率、上下文占用与本会话速度指标。
+- 分发：继续沿 GitHub Release 通道提供候选版本；本 beta 同步发布未签名 Apple
+  Silicon ZIP，供接受 Gatekeeper 手动确认的早期用户直接下载。
 
 ### 0.1.0-beta.2
 
