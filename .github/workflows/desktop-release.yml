@@ -93,7 +93,7 @@ jobs:
           DSH_STAGE_TRACE: '1'
         run: |
           rm -rf apps/desktop/release
-          export DSH_STAGE_TRACE
+          export DSH_STAGE_TRACE=1
           npm run build
           npm run build:desktop
           npm run desktop:icon:mac
