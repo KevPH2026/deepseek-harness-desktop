@@ -138,11 +138,15 @@ async function scrubPnpmMetadata(stage: string, repositoryRoot: string): Promise
  * `.node` payloads are covered too.
  */
 async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot: string): Promise<void> {
-  // Scan only for paths inside this checkout. The OS home directory is
-  // intentionally excluded: GitHub Actions runners bake `/Users/runner` into
-  // every prebuilt native binary (ripgrep, sharp-libvips, node-pty, ...) at
-  // their upstream build step, and that path is not the packaging user's.
-  const needles = [Buffer.from(repositoryRoot, 'utf8')]
+  // Scan only for an identifier unique to this checkout. `repositoryRoot`
+  // is too broad on shared CI runners: GitHub Actions macos-15 checks the
+  // repository out at `/Users/runner/work/deepseek-harness-desktop`, the
+  // same `/Users/runner/work` prefix that prebuilt native modules (sharp-
+  // libvips, vscode ripgrep, node-pty) carry inside their own Mach-O load
+  // commands, so a prefix check would always trip. The `.git` directory
+  // is private to this checkout and never appears inside an upstream
+  // prebuilt module.
+  const needles = [Buffer.from(`${repositoryRoot}/.git`, 'utf8')]
   const offenders: string[] = []
   await scan(stage)
 
