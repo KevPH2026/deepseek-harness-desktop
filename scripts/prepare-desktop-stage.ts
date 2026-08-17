@@ -24,16 +24,19 @@ const sourceNodeModules = join(desktop, 'node_modules')
 
 assertContained(stage, desktop)
 
-const BINARY_EXTENSIONS = new Set(['.node', '.dylib', '.so', '.bin'])
+const NATIVE_BINARY_PREFIXES: readonly string[] = [
+  'node_modules/@img/sharp-libvips-darwin-arm64/',
+  'node_modules/@vscode/ripgrep-darwin-arm64/',
+  'node_modules/node-pty/prebuilds/',
+]
 
 /**
- * File extensions whose load paths are baked at build time and cannot be
- * scrubbed with a string replace. The release-hygiene scan skips these and
- * relies on the runtime rpath to keep them inside the bundle.
+ * Prebuilt native modules whose build machine path is baked into Mach-O load
+ * commands at compile time and cannot be scrubbed without breaking the
+ * binary. They resolve relative to the bundle via rpath at runtime.
  */
-function isNativeBinary(path: string): boolean {
-  const dot = path.lastIndexOf('.')
-  return dot >= 0 && BINARY_EXTENSIONS.has(path.slice(dot))
+function isNativeBinary(stageRelative: string): boolean {
+  return NATIVE_BINARY_PREFIXES.some(prefix => stageRelative.startsWith(prefix))
 }
 
 
