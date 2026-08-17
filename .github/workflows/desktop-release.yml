@@ -98,6 +98,13 @@ jobs:
             echo
             cat apps/desktop/CHANGELOG.md
           } > "$notes"
+          # Re-running the workflow on the same tag must be idempotent.
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            # Tag is immutable once a release exists, so recreate the release
+            # by deleting it first (which keeps the git tag in place) and
+            # uploading the fresh artifacts.
+            gh release delete "$RELEASE_TAG" --yes --cleanup-tag=false
+          fi
           gh release create "$RELEASE_TAG" \
             apps/desktop/release/*.dmg \
             apps/desktop/release/*.zip \
@@ -106,5 +113,4 @@ jobs:
             --verify-tag \
             --title "DeepSeek Harness Desktop $version" \
             --notes-file "$notes" \
-            --prerelease \
-            --clobber
+            --prerelease
