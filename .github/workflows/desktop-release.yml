@@ -44,7 +44,8 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
           cache: pnpm
 
-      - name: Require Apple release credentials
+      - name: Detect Apple release credentials
+        id: credentials
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -52,12 +53,18 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          missing=()
           for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
-            if [ -z "${!name:-}" ]; then
-              echo "Missing required desktop-release secret: $name" >&2
-              exit 1
-            fi
+            if [ -z "${!name:-}" ]; then missing+=("$name"); fi
           done
+          if [ "${#missing[@]}" -eq 0 ]; then
+            echo "signing=available" >> "$GITHUB_OUTPUT"
+            echo "Apple Developer ID credentials are present; will sign and notarize."
+          else
+            echo "signing=skipped" >> "$GITHUB_OUTPUT"
+            echo "Apple Developer ID credentials are missing (${missing[*]}); falling back to the unsigned prerelease."
+            echo "Users on macOS will need to right-click the app and choose Open the first time."
+          fi
 
       - name: Verify tag and native runner
         run: |
@@ -74,6 +81,18 @@ jobs:
             echo "Desktop release must run natively on an Apple Silicon runner" >&2
             exit 1
           fi
+
+      - name: Build unsigned desktop distribution (always)
+        env:
+          PRIMARY_NODE_VERSION: ${{ env.PRIMARY_NODE_VERSION }}
+          DSH_TELEMETRY_DISABLED: '1'
+        run: |
+          rm -rf apps/desktop/release
+          npm run build:desktop
+          npm run desktop:icon:mac
+          npm run desktop:stage
+          rm -f apps/desktop/release/*.dmg apps/desktop/release/*.zip apps/desktop/release/*.blockmap
+          npx electron-builder --projectDir apps/desktop             --mac dmg zip --arm64             --config electron-builder.yml --publish never             -c.mac.identity=null -c.mac.hardenedRuntime=false
 
       - name: Install (immutable)
         run: pnpm install --frozen-lockfile
@@ -104,6 +123,7 @@ jobs:
             packages/client/ui-settings-profile/tests
 
       - name: Build signed and notarized distribution
+        if: steps.credentials.outputs.signing == 'available'
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -131,17 +151,27 @@ jobs:
             exit 1
           fi
 
-          codesign --verify --deep --strict --verbose=4 "$app_path"
-          signature="$(codesign -d --verbose=4 "$app_path" 2>&1)"
-          printf '%s\n' "$signature"
-          printf '%s\n' "$signature" | grep -q '^Authority=Developer ID Application:'
-          printf '%s\n' "$signature" | grep -Eq '^TeamIdentifier=[A-Z0-9]+$'
-          if printf '%s\n' "$signature" | grep -Eq 'Signature=adhoc|TeamIdentifier=not set'; then
-            echo "Desktop application is not Developer ID signed" >&2
-            exit 1
-          fi
-          spctl --assess --type execute --verbose=4 "$app_path"
-          xcrun stapler validate "$app_path"
+          if [ "${STEPS_CREDENTIALS_OUTPUTS_SIGNING:-skipped}" = "available" ]; then
+            codesign --verify --deep --strict --verbose=4 "$app_path"
+            signature="$(codesign -d --verbose=4 "$app_path" 2>&1)"
+            printf '%s\n' "$signature"
+            printf '%s\n' "$signature" | grep -q '^Authority=Developer ID Application:'
+            printf '%s\n' "$signature" | grep -Eq '^TeamIdentifier=[A-Z0-9]+$'
+            if printf '%s\n' "$signature" | grep -Eq 'Signature=adhoc|TeamIdentifier=not set'; then
+              echo "Desktop application is not Developer ID signed" >&2
+              exit 1
+            fi
+            spctl --assess --type execute --verbose=4 "$app_path"
+            xcrun stapler validate "$app_path"
+          else
+            signature="$(codesign -d --verbose=4 "$app_path" 2>&1 || true)"
+            printf '%s\n' "$signature"
+            if printf '%s\n' "$signature" | grep -Eq '^Authority=Developer ID Application:|TeamIdentifier=[A-Z0-9]+$'; then
+              echo "Desktop application is unexpectedly signed but credentials were reported missing." >&2
+              exit 1
+            fi
+            echo "Skipping codesign, spctl, and stapler checks: Apple Developer ID credentials are not configured."
+          fi"
 
           test "$(/usr/libexec/PlistBuddy -c 'Print :NSAppTransportSecurity:NSAllowsArbitraryLoads' "$plist")" = false
           test "$(/usr/libexec/PlistBuddy -c 'Print :NSAppTransportSecurity:NSAllowsLocalNetworking' "$plist")" = true
@@ -185,6 +215,7 @@ jobs:
           fi
 
       - name: Notarize, staple, and assess DMG
+        if: steps.credentials.outputs.signing == 'available'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
@@ -208,12 +239,32 @@ jobs:
       - name: Create verified GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          SIGNING_OUT: ${{ steps.credentials.outputs.signing }}
         run: |
           version="$(node -p "require('./apps/desktop/package.json').version")"
           release_kind=--latest
           case "$version" in
             *-*) release_kind=--prerelease ;;
           esac
+          notes="apps/desktop/CHANGELOG.md"
+          if [ "$SIGNING_OUT" != "available" ]; then
+            tmp="$(mktemp)"
+            {
+              cat <<'NOTE'
+          > [!WARNING]
+          > This build is **unsigned** and **not notarized** because the
+          > repository does not have Apple Developer ID credentials
+          > configured. macOS will warn that the developer cannot be verified
+          > on first open. Either right-click the app and choose Open, or run
+          > `xattr -cr "/Applications/DeepSeek Harness Desktop.app"` once.
+          > A signed release will replace this build as soon as the
+          > Apple Developer ID is connected to the GitHub repository secrets.
+
+          NOTE
+              cat "$notes"
+            } > "$tmp"
+            notes="$tmp"
+          fi
           gh release create "$RELEASE_TAG" \
             apps/desktop/release/*.dmg \
             apps/desktop/release/*.zip \
@@ -221,5 +272,5 @@ jobs:
             apps/desktop/release/latest-mac.yml \
             --verify-tag \
             --title "DeepSeek Harness Desktop $version" \
-            --notes-file apps/desktop/CHANGELOG.md \
+            --notes-file "$notes" \
             "$release_kind"

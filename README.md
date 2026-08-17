@@ -98,9 +98,23 @@ DeepSeek Harness 已经提供了强大的插件化 agent harness（智能体框�
 
 ## 开始使用
 
-### 安装已签名版本
+### 直接下载安装（推荐，推荐，推荐）
 
-完成签名和公证的 Apple Silicon 版本会发布在 [Releases 页面](https://github.com/KevPH2026/deepseek-harness-desktop/releases)。应用只检查这一发布渠道，不会跟随任意仓库提交，并且会在下载或安装更新前征求用户确认。
+前往 [Releases 页面](https://github.com/KevPH2026/deepseek-harness-desktop/releases)，下载对应 macOS Apple Silicon 的 `DeepSeek-Harness-Desktop-*-arm64.dmg` 或同名 `.zip`。
+
+> 仓库当前**没有**配置 Apple Developer ID 凭凭，因此 Release 资产**默认是未签名的未公证产物**。macOS 首次打开时会提示「无法验证开发者」。请按以下任一方式处理一次即可：
+
+```sh
+# 方法 A：右键点击 .app → 打开 → 在弹窗里再次点「打开」
+# 方法 B：终端一行命令绕过 Gatekeeper
+xattr -cr "/Applications/DeepSeek Harness Desktop.app"
+```
+
+后续接上 Apple 开发者账号（¥99/年）后，本仓库会自动生成**已签名 + 已公证**的官方版本，无缝覆盖升级，安装体验与官方应用一致。
+
+### 应用内更新通道
+
+应用只检查这一发布渠道，不会跟随任意仓库提交；新版本发布时菜单会在下载或安装前征求用户确认。
 
 ### 从源码运行
 
