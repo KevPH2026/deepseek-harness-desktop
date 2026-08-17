@@ -99,7 +99,7 @@ jobs:
           npm run desktop:icon:mac
           npm run desktop:stage
           rm -f apps/desktop/release/*.dmg apps/desktop/release/*.zip apps/desktop/release/*.blockmap
-          npx electron-builder --projectDir apps/desktop             --mac dmg zip --arm64             --config electron-builder.yml --publish never             -c.mac.identity=null -c.mac.hardenedRuntime=false
+          npm exec --prefix apps/desktop -- electron-builder --projectDir apps/desktop             --mac dmg zip --arm64             --config electron-builder.yml --publish never             -c.mac.identity=null -c.mac.hardenedRuntime=false
 
 
       - name: Verify release quality gates
