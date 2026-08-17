@@ -161,7 +161,7 @@ async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot:
 
 /** Read one staged file (the largest payloads are single-digit MB dylibs) and search its bytes. */
 async function fileContains(path: string, needles: readonly Buffer[]): Promise<boolean> {
-  if (await isNativeBinary(path)) return false
+  if (isNativeBinary(relative(stage, path))) return false
   const content = await readFile(path)
   return needles.some(needle => content.includes(needle))
 }
