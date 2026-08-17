@@ -4,7 +4,7 @@
 
 # DeepSeek Harness Desktop
 
-[English](README.md) | 中文
+**中文** | [English](README.en.md)
 
 <p align="center"><strong>一个支持编程、工具、多模态生成，还能通过 Telegram 在手机上继续研究和写作任务的桌面 agent 工作区。</strong></p>
 
