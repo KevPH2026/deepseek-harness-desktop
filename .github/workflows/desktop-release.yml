@@ -82,20 +82,23 @@ jobs:
             exit 1
           fi
 
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+
       - name: Build unsigned desktop distribution (always)
         env:
           PRIMARY_NODE_VERSION: ${{ env.PRIMARY_NODE_VERSION }}
           DSH_TELEMETRY_DISABLED: '1'
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
         run: |
           rm -rf apps/desktop/release
+          npm run build
           npm run build:desktop
           npm run desktop:icon:mac
           npm run desktop:stage
           rm -f apps/desktop/release/*.dmg apps/desktop/release/*.zip apps/desktop/release/*.blockmap
           npx electron-builder --projectDir apps/desktop             --mac dmg zip --arm64             --config electron-builder.yml --publish never             -c.mac.identity=null -c.mac.hardenedRuntime=false
 
-      - name: Install (immutable)
-        run: pnpm install --frozen-lockfile
 
       - name: Verify release quality gates
         run: |
