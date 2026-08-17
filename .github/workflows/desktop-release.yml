@@ -52,19 +52,24 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          missing=()
+        run: bash -lc '
+          set -e
+          missing=""
           for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
-            if [ -z "${!name:-}" ]; then missing+=("$name"); fi
+            v="${!name:-}"
+            if [ -z "$v" ]; then
+              if [ -n "$missing" ]; then missing="$missing $name"; else missing="$name"; fi
+            fi
           done
-          if [ "${#missing[@]}" -eq 0 ]; then
+          if [ -z "$missing" ]; then
             echo "signing=available" >> "$GITHUB_OUTPUT"
             echo "Apple Developer ID credentials are present; will sign and notarize."
           else
             echo "signing=skipped" >> "$GITHUB_OUTPUT"
-            echo "Apple Developer ID credentials are missing (${missing[*]}); falling back to the unsigned prerelease."
+            echo "Apple Developer ID credentials are missing ($missing); falling back to the unsigned prerelease."
             echo "Users on macOS will need to right-click the app and choose Open the first time."
           fi
+        '
 
       - name: Verify tag and native runner
         run: |
