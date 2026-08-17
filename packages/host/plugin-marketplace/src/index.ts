@@ -114,12 +114,17 @@ export function withCuratedDisableSection(source: string): string {
   const stripped = withoutCuratedDisableSection(source)
   const lines = [
     CURATED_DISABLE_BEGIN,
-    ...CURATED_BUNDLE_DISABLED_IDS.map(id => `- id: ${id}
-  disabled: true`),
+    ...CURATED_BUNDLE_DISABLED_IDS.map(id => `- id: ${id}\n  disabled: true`),
     CURATED_DISABLE_END,
   ]
   const joined = stripped.trimEnd()
-  const separator = joined === '' ? '' : '\n\n'
+  // The profile patch loader parses each `---`-separated YAML document as its
+  // own list. Always start the managed section with `---` so the loader
+  // sees it as a separate document even when the user-authored portion is
+  // already a complete list, otherwise the parser throws "end of the
+  // stream or a document separator is expected" and the runtime fails to
+  // start.
+  const separator = joined === '' ? '---' : '\n\n---\n\n'
   return `${joined}${separator}${lines.join('\n')}\n`
 }
 
