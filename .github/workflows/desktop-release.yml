@@ -106,4 +106,5 @@ jobs:
             --verify-tag \
             --title "DeepSeek Harness Desktop $version" \
             --notes-file "$notes" \
-            --prerelease
+            --prerelease \
+            --clobber
