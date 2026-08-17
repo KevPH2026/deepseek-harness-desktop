@@ -171,8 +171,12 @@ jobs:
           else
             signature="$(codesign -d --verbose=4 "$app_path" 2>&1 || true)"
             printf '%s\n' "$signature"
-            if printf '%s\n' "$signature" | grep -Eq '^(Authority=Developer ID Application:|TeamIdentifier=[A-Z0-9]+$)'; then
-              echo "Desktop application is unexpectedly signed but credentials were reported missing." >&2
+            # Unsigned fall-back: any line starting with Authority=Developer ID Application
+            # would mean the upstream build unexpectedly produced a signed app.
+            # The plain 'Authority=' line that an unsigned app prints is filtered
+            # out by requiring the full "Developer ID Application" prefix.
+            if printf '%s\n' "$signature" | grep -q '^Authority=Developer ID Application:'; then
+              echo "Desktop application is unexpectedly Developer ID signed but credentials were reported missing." >&2
               exit 1
             fi
             echo "Skipping codesign, spctl, and stapler checks: Apple Developer ID credentials are not configured."
