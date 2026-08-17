@@ -161,7 +161,11 @@ async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot:
       if (await fileContains(path, needles)) {
         const rel = relative(stage, path)
         const skip = isNativeBinary(rel)
-        if (process.env['DSH_STAGE_TRACE']) process.stderr.write(`trace: ${rel} skip=${skip}\n`)
+        // Always log the first ten decisions; the npm/pnpm wrapper masks
+        // env propagation so we cannot rely on DSH_STAGE_TRACE here.
+        if (offenders.length < 10) {
+          process.stderr.write(`stage-gate: rel=${rel} skip=${skip}\n`)
+        }
         if (!skip) offenders.push(rel)
       }
     }
