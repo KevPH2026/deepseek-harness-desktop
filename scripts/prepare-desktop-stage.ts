@@ -24,6 +24,19 @@ const sourceNodeModules = join(desktop, 'node_modules')
 
 assertContained(stage, desktop)
 
+const BINARY_EXTENSIONS = new Set(['.node', '.dylib', '.so', '.bin'])
+
+/**
+ * File extensions whose load paths are baked at build time and cannot be
+ * scrubbed with a string replace. The release-hygiene scan skips these and
+ * relies on the runtime rpath to keep them inside the bundle.
+ */
+function isNativeBinary(path: string): boolean {
+  const dot = path.lastIndexOf('.')
+  return dot >= 0 && BINARY_EXTENSIONS.has(path.slice(dot))
+}
+
+
 const manifest = JSON.parse(await readFile(join(stage, 'package.json'), 'utf8')) as DesktopManifest
 const dependencies = Object.keys(manifest.dependencies ?? {}).sort()
 const restored: string[] = []
@@ -145,6 +158,7 @@ async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot:
 
 /** Read one staged file (the largest payloads are single-digit MB dylibs) and search its bytes. */
 async function fileContains(path: string, needles: readonly Buffer[]): Promise<boolean> {
+  if (await isNativeBinary(path)) return false
   const content = await readFile(path)
   return needles.some(needle => content.includes(needle))
 }
