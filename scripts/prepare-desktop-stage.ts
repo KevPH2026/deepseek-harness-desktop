@@ -138,7 +138,11 @@ async function scrubPnpmMetadata(stage: string, repositoryRoot: string): Promise
  * `.node` payloads are covered too.
  */
 async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot: string): Promise<void> {
-  const needles = [Buffer.from(repositoryRoot, 'utf8'), Buffer.from(homedir(), 'utf8')]
+  // Scan only for paths inside this checkout. The OS home directory is
+  // intentionally excluded: GitHub Actions runners bake `/Users/runner` into
+  // every prebuilt native binary (ripgrep, sharp-libvips, node-pty, ...) at
+  // their upstream build step, and that path is not the packaging user's.
+  const needles = [Buffer.from(repositoryRoot, 'utf8')]
   const offenders: string[] = []
   await scan(stage)
 
@@ -156,9 +160,7 @@ async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot:
       if (!entry.isFile()) continue
       if (await fileContains(path, needles)) {
         const rel = relative(stage, path)
-        const skipped = isNativeBinary(rel)
-        if (process.env['DSH_STAGE_TRACE']) process.stderr.write(`trace: ${rel} skipped=${skipped}\n`)
-        if (!skipped) offenders.push(rel)
+        if (!isNativeBinary(rel)) offenders.push(rel)
       }
     }
   }
