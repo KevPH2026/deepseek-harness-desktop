@@ -164,7 +164,7 @@ async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot:
         // Always log the first ten decisions; the npm/pnpm wrapper masks
         // env propagation so we cannot rely on DSH_STAGE_TRACE here.
         if (offenders.length < 10) {
-          process.stderr.write(`stage-gate: rel=${rel} skip=${skip}\n`)
+          process.stdout.write(`stage-gate: rel=${rel} skip=${skip}\n`)
         }
         if (!skip) offenders.push(rel)
       }
