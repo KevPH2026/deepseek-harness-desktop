@@ -171,7 +171,7 @@ jobs:
           else
             signature="$(codesign -d --verbose=4 "$app_path" 2>&1 || true)"
             printf '%s\n' "$signature"
-            if printf '%s\n' "$signature" | grep -Eq '^Authority=Developer ID Application:|TeamIdentifier=[A-Z0-9]+$'; then
+            if printf '%s\n' "$signature" | grep -Eq '^(Authority=Developer ID Application:|TeamIdentifier=[A-Z0-9]+$)'; then
               echo "Desktop application is unexpectedly signed but credentials were reported missing." >&2
               exit 1
             fi
