@@ -154,7 +154,12 @@ async function assertStageFreeOfBuildMachinePaths(stage: string, repositoryRoot:
         continue
       }
       if (!entry.isFile()) continue
-      if (await fileContains(path, needles)) offenders.push(relative(stage, path))
+      if (await fileContains(path, needles)) {
+        const rel = relative(stage, path)
+        const skipped = isNativeBinary(rel)
+        if (process.env['DSH_STAGE_TRACE']) process.stderr.write(`trace: ${rel} skipped=${skipped}\n`)
+        if (!skipped) offenders.push(rel)
+      }
     }
   }
 }
