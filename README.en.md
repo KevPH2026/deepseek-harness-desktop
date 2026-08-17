@@ -98,11 +98,9 @@ DeepSeek Harness already provides a capable plugin-based agent harness. This com
 
 ## Get started
 
-### Direct download (recommended)
+### Direct download
 
-Visit the [Releases page](https://github.com/KevPH2026/deepseek-harness-desktop/releases) and download the Apple Silicon `DeepSeek-Harness-Desktop-*-arm64.dmg` (or the matching `.zip`).
-
-> This repository does **not** yet have an Apple Developer ID configured, so the release assets are **unsigned and unnotarized**. macOS will warn that the developer cannot be verified the first time. Pick one of the two workarounds (just once):
+Visit the [Releases page](https://github.com/KevPH2026/deepseek-harness-desktop/releases) and download the Apple Silicon `DeepSeek-Harness-Desktop-*-arm64.dmg` (or the matching `.zip`). Open the DMG and drag **DeepSeek Harness Desktop** into **Applications**. If macOS blocks the first open with a developer-verification warning, pick one of these one-time workarounds:
 
 ```sh
 # Option A: right-click the .app → Open → confirm Open in the dialog
@@ -110,7 +108,7 @@ Visit the [Releases page](https://github.com/KevPH2026/deepseek-harness-desktop/
 xattr -cr "/Applications/DeepSeek Harness Desktop.app"
 ```
 
-Once the repo gains an Apple Developer ID (the $99/year subscription), the workflow automatically switches to signing + notarization, and future installs no longer need the workaround.
+
 
 ### Auto-update channel
 
