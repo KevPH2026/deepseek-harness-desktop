@@ -91,6 +91,7 @@ jobs:
           DSH_TELEMETRY_DISABLED: '1'
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
           DSH_STAGE_TRACE: '1'
+          DSH_STAGE_TRACE: '1'
         run: |
           rm -rf apps/desktop/release
           npm run build
