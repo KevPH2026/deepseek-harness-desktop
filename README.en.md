@@ -122,8 +122,29 @@ Prerequisites: macOS on Apple Silicon, Node.js `^22.19.0 || >=24.0.0`, pnpm, and
 git clone https://github.com/KevPH2026/deepseek-harness-desktop.git
 cd deepseek-harness-desktop
 pnpm install
+pnpm setup:skins    # installs the 10 community skins, the whale pet, the skin center, etc.
 npm run desktop:dev
 ```
+
+`pnpm setup:skins` is idempotent: a second run does not re-invoke `dsh plugin add`; once the profile is up to date the script exits silently.
+
+### Reproduce the public skin center
+
+The release ships with only the three built-in skins (Deep Sea Blue / Aurora Night / Warm Paper) and the official pet slot. To see the ten community skins and the whale pet shown on the [Releases page](https://github.com/KevPH2026/deepseek-harness-desktop/releases), run the following after installing a GitHub build:
+
+```sh
+# After mounting the DMG and copying the app into /Applications:
+hdiutil attach DeepSeek-Harness-Desktop-0.1.0-beta.3-arm64.dmg
+sudo cp -R "/Volumes/DeepSeek Harness Desktop/DeepSeek Harness Desktop.app" /Applications/
+
+# Open the app once, click "Configure later" on the API key dialog, then quit.
+# Back in the repo root:
+pnpm install
+pnpm setup:skins
+# Restart the app. Settings → Appearance → Skin Center now lists the 10 community skins.
+```
+
+The script only writes to your local profile under `~/Library/Application Support/DeepSeek Harness Desktop/harness/profiles/web/`; it never modifies the source tree or any other user's machine.
 
 Create a local unsigned verification build:
 

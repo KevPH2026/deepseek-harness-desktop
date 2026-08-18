@@ -119,6 +119,31 @@ xattr -cr "/Applications/DeepSeek Harness Desktop.app"
 前置条件：Apple Silicon Mac、Node.js `^22.19.0 || >=24.0.0`、pnpm，以及一个模型提供方 API Key。
 
 ```sh
+pnpm install
+pnpm setup:skins    # 一键安装 10 款社区皮肤、鲸鱼娘宠物、皮肤中心等精选增强
+pnpm run desktop:dev
+```
+
+`pnpm setup:skins` 是幂等的：第二次运行不会重复执行 `dsh plugin add`，profile 已是最新时会直接跳过。
+
+### 一键复现社区皮肤
+
+发布版只内置 3 套官方皮肤(深海蓝/极光夜/暖纸)和 1 个官方宠物位。要看到 [Releases 页面](https://github.com/KevPH2026/deepseek-harness-desktop/releases) 上展示的 10 款社区皮肤 + 鲸鱼娘桌面宠物，在装好 GitHub Release 之后跑：
+
+```sh
+# 解包后:
+hdiutil attach DeepSeek-Harness-Desktop-0.1.0-beta.3-arm64.dmg
+sudo cp -R "/Volumes/DeepSeek Harness Desktop/DeepSeek Harness Desktop.app" /Applications/
+
+# 首次启动 + 一次 Configure later 之后, 在仓库根:
+pnpm install
+pnpm setup:skins
+# 重启应用后, 设置 → 外观 → Skin Center 即会显示 10 款社区皮肤
+```
+
+这一步只动你本机的 `~/Library/Application Support/DeepSeek Harness Desktop/harness/profiles/web/`,不会向其他用户写入任何东西,也不会修改源码。
+
+```sh
 git clone https://github.com/KevPH2026/deepseek-harness-desktop.git
 cd deepseek-harness-desktop
 pnpm install

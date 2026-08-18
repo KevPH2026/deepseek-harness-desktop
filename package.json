@@ -30,6 +30,7 @@
     "desktop:verify-built-main": "node scripts/verify-desktop-built-main.mjs",
     "desktop:stage": "npm run desktop:verify-runtime && tsx scripts/reset-desktop-stage.ts && pnpm --config.verify-deps-before-run=false --filter @deepseek-ai/dsh-desktop deploy --prod --frozen-lockfile --trust-lockfile --ignore-scripts --config.node-linker=hoisted --config.auto-install-peers=true --config.link-workspace-packages=true --config.inject-workspace-packages=true apps/desktop/.stage && tsx scripts/prepare-desktop-stage.ts",
     "desktop:smoke:mac": "tsx scripts/smoke-desktop-runtime.ts",
+    "setup:skins": "tsx scripts/setup-skins.ts",
     "desktop:pack:mac": "npm run build && npm run build:desktop && npm run desktop:icon:mac && npm run desktop:stage && apps/desktop/node_modules/.bin/electron-builder --projectDir apps/desktop --dir --mac --arm64 --config electron-builder.yml --publish never -c.mac.identity=null -c.mac.hardenedRuntime=false && npm run desktop:smoke:mac",
     "desktop:dist:mac": "npm run build && npm run build:desktop && npm run desktop:icon:mac && npm run desktop:stage && apps/desktop/node_modules/.bin/electron-builder --projectDir apps/desktop --mac dmg zip --arm64 --config electron-builder.yml --publish never -c.forceCodeSigning=true -c.mac.notarize=true && npm run desktop:smoke:mac",
     "clean": "tsx scripts/clean.ts",
