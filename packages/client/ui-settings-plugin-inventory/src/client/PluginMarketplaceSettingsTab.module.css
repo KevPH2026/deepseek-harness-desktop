@@ -708,3 +708,70 @@
   max-height: 200px;
   overflow: auto;
 }
+
+.featured {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--dsh-color-border, rgba(77, 107, 254, 0.35));
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(77, 107, 254, 0.04), transparent);
+  margin: 0 0 20px;
+}
+
+.featuredMeta {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.featuredGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.featuredCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--dsh-color-border, rgba(128, 140, 170, 0.25));
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.featuredCardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.featuredName {
+  font-size: 14px;
+}
+
+.featuredPackage {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.featuredReason {
+  font-size: 12px;
+  opacity: 0.85;
+  flex: 1;
+  margin: 0;
+}
+
+.featuredConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.featuredConfirmRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}

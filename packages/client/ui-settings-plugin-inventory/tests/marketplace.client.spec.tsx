@@ -151,6 +151,11 @@ function props(
     })),
     prepareImport: vi.fn(async () => ({ ok: false, error: { code: 'invalid-source' as const, message: 'disabled' } })),
     confirmImport: vi.fn(async () => ({ ok: false, error: { code: 'confirmation-not-found' as const, message: 'disabled', exitCode: null } })),
+    featuredPlugins: vi.fn(async () => ({
+      items: [],
+      source: 'bundled-default',
+      refreshedAt: '2026-08-18T00:00:00.000Z',
+    })),
   } as unknown as PluginMarketplaceSettingsTabProps
 }
 

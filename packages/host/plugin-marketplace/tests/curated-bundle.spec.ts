@@ -106,7 +106,11 @@ describe('curated disable section helpers', () => {
   it('inserts the managed section once and preserves user content', () => {
     const user = '# my notes\n- id: mine\n  disabled: false\n'
     const once = withCuratedDisableSection(user)
-    expect(once).toContain(user.trimEnd())
+    // The managed section is appended with a leading '---' document
+    // separator, so the user content lives in the first document and
+    // the managed disable rows live in the second. The first doc is
+    // round-tripped exactly.
+    expect(once.split('\n---\n')[0]?.trimEnd()).toBe(user.trimEnd()) // already trimmed
     expect(once).toContain(`- id: ${CURATED_BUNDLE_DISABLED_IDS[0]}`)
     expect(withCuratedDisableSection(once)).toBe(once)
   })
@@ -114,7 +118,13 @@ describe('curated disable section helpers', () => {
   it('removes exactly the managed section', () => {
     const user = '# my notes\n'
     const patched = withCuratedDisableSection(user)
-    expect(withoutCuratedDisableSection(patched).trimEnd()).toBe(user.trimEnd())
+    // The leading '---' document separator is a write-side artefact of
+    // keeping the managed section in its own YAML document. The test
+    // strips it explicitly here so it can compare against the user input.
+    const stripped = withoutCuratedDisableSection(patched)
+      .replace(/^\n*---\n*/, '')
+      .trimEnd()
+    expect(stripped).toBe(user.trimEnd())
     expect(withoutCuratedDisableSection(user)).toBe(user)
   })
 })

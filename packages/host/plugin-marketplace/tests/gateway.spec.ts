@@ -103,6 +103,7 @@ describe('PluginMarketplaceGateway', () => {
       'catalog',
       'confirmImport',
       'curatedBundleStatus',
+      'featuredPlugins',
       'installCuratedBundle',
       'prepareImport',
       'resources',

@@ -42,6 +42,7 @@ export interface PluginMarketplaceSettingsTabInjected {
   uninstallCuratedBundle: () => Promise<PluginMarketplaceCuratedBundleResult>
   prepareImport: (itemId: string) => Promise<unknown>
   confirmImport: (confirmationId: PluginMarketplaceConfirmationId) => Promise<unknown>
+  featuredPlugins: () => Promise<unknown>
 }
 
 /** Full props assembled by the Settings slot renderer. */
@@ -111,12 +112,25 @@ function compactStars(value: number): string {
 }
 
 function formatDate(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
+  const parsed = Date.parse(value)
+  if (Number.isNaN(parsed)) return value
   return new Intl.DateTimeFormat(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+  }).format(new Date(parsed))
+}
+
+function formatFeaturedTime(value: string): string {
+  const parsed = Date.parse(value)
+  if (Number.isNaN(parsed)) return value
+  const date = new Date(parsed)
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(date)
 }
 
@@ -140,6 +154,7 @@ export function PluginMarketplaceSettingsTab({
   uninstallCuratedBundle,
   prepareImport,
   confirmImport,
+  featuredPlugins,
   t,
 }: PluginMarketplaceSettingsTabProps): ReactNode {
   const [curated, setCurated] = useState<
@@ -169,6 +184,22 @@ export function PluginMarketplaceSettingsTab({
   const [state, setState] = useState<CatalogState>({ status: 'loading' })
   const [links, setLinks] = useState<PluginMarketplaceResources>()
   const [customKind, setCustomKind] = useState<CustomSourceKind>('github')
+  const [featured, setFeatured] = useState<
+    | { readonly status: 'loading' }
+    | { readonly status: 'error' }
+    | { readonly status: 'ready'; readonly items: ReadonlyArray<{
+        readonly package: string
+        readonly displayName: string
+        readonly whyIncluded: string
+        readonly category: string
+      }>; readonly source: 'fetched' | 'bundled-default'; readonly refreshedAt: string }
+  >({ status: 'loading' })
+  const [featuredConfirming, setFeaturedConfirming] = useState<{
+    readonly package: string
+    readonly displayName: string
+    readonly whyIncluded: string
+  } | null>(null)
+  const [featuredAcknowledging, setFeaturedAcknowledging] = useState(false)
   const [customSource, setCustomSource] = useState('')
   const [validatingId, setValidatingId] = useState<string>()
   const [validationError, setValidationError] = useState<string>()
@@ -224,6 +255,58 @@ export function PluginMarketplaceSettingsTab({
     )
     return () => { current = false }
   }, [catalog, category, query, refresh])
+
+  useEffect(() => {
+    let current = true
+    void featuredPlugins().then(
+      (raw) => {
+        if (!current) return
+        const snapshot = raw as {
+          items: ReadonlyArray<{
+            package: string
+            displayName: string
+            whyIncluded: string
+            category: string
+          }>
+          source: 'fetched' | 'bundled-default'
+          refreshedAt: string
+        }
+        setFeatured({
+          status: 'ready',
+          items: snapshot.items.map(item => ({
+            package: item.package,
+            displayName: item.displayName,
+            whyIncluded: item.whyIncluded,
+            category: item.category,
+          })),
+          source: snapshot.source,
+          refreshedAt: snapshot.refreshedAt,
+        })
+      },
+      () => { if (current) setFeatured({ status: 'error' }) },
+    )
+    return () => { current = false }
+  }, [featuredPlugins])
+
+  const installFeaturedNow = (packageName: string): void => {
+    // The modal does the same prepareImport + confirmImport flow as the
+    // explicit GitHub Topics path. We only track status in the modal's
+    // confirm CTA; HTTP surface state is intentionally separate from the
+    // self-contained featured-list state.
+    void prepareImport(packageName).then(
+      (raw) => {
+        const result = raw as
+          | { ok: true; value: { confirmationId: PluginMarketplaceConfirmationId } }
+          | { ok: false; error: { code: string; message: string } }
+        if (!result.ok) return
+        void confirmImport(result.value.confirmationId).then(
+          () => { setFeaturedConfirming(null) },
+          () => {},
+        )
+      },
+      () => {},
+    )
+  }
 
   useEffect(() => {
     let current = true
@@ -342,6 +425,86 @@ export function PluginMarketplaceSettingsTab({
           </a>
         ) : null}
       </div>
+
+      <section className={css.featured} aria-labelledby="featured-picks-title">
+        <div className={css.sectionHeading}>
+          <h4 id="featured-picks-title">{t('featuredTitle')}</h4>
+          <p>{t('featuredDescription')}</p>
+        </div>
+        {featured.status === 'loading' ? (
+          <p className={css.status}>{t('featuredLoading')}</p>
+        ) : featured.status === 'error' ? (
+          <p className={css.failure} role="alert">{t('featuredError')}</p>
+        ) : (
+          <>
+            <div className={css.featuredMeta}>
+              {featured.status === 'ready' && featured.source === 'fetched'
+                ? t('featuredSourceFetched', { when: formatFeaturedTime(featured.refreshedAt) })
+                : t('featuredSourceBundled')}
+            </div>
+            <div className={css.featuredGrid}>
+              {(featured.status === 'ready' ? featured.items : []).map((item, i) => (
+                <article key={`${item.package}-${i}`} className={css.featuredCard} data-category={item.category}>
+                  <header className={css.featuredCardHead}>
+                    <strong className={css.featuredName}>{item.displayName}</strong>
+                    <span className={css.featuredPackage}><code>{item.package}</code></span>
+                  </header>
+                  <p className={css.featuredReason}>{item.whyIncluded}</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={curated.phase === 'busy'}
+                    onClick={() => {
+                      setFeaturedConfirming({
+                        package: item.package,
+                        displayName: item.displayName,
+                        whyIncluded: item.whyIncluded,
+                      })
+                    }}
+                  >
+                    {t('marketFeaturedInstall')}
+                  </Button>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+
+      <Modal
+        open={featuredConfirming !== null}
+        onClose={() => { setFeaturedConfirming(null) }}
+        closeLabel={t('close')}
+        title={featuredConfirming === null ? '' : t('marketFeaturedConfirmTitle', { name: featuredConfirming.displayName })}
+        description={t('marketFeaturedConfirmIntro')}
+        footer={featuredConfirming === null ? null : (
+          <>
+            <Button variant="outline" onClick={() => { setFeaturedConfirming(null) }}>{t('marketImportCancel')}</Button>
+            <Button
+              variant="primary"
+              disabled={featuredAcknowledging !== true}
+              onClick={() => { installFeaturedNow(featuredConfirming.package) }}
+            >
+              {t('marketImportConfirmAction')}
+            </Button>
+          </>
+        )}
+      >
+        {featuredConfirming === null ? null : (
+          <div className={css.featuredConfirm}>
+            <p><code>{featuredConfirming.package}</code></p>
+            <p>{featuredConfirming.whyIncluded}</p>
+            <label className={css.featuredConfirmRow}>
+              <input
+                type="checkbox"
+                checked={featuredAcknowledging}
+                onChange={(event) => { setFeaturedAcknowledging(event.currentTarget.checked) }}
+              />
+              <span>{t('curatedAcknowledge')}</span>
+            </label>
+          </div>
+        )}
+      </Modal>
 
       <section className={css.custom} aria-labelledby="curated-bundle-title">
         <div className={css.sectionHeading}>

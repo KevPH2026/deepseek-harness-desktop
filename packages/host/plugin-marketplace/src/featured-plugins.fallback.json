@@ -1,0 +1,240 @@
+{
+  "items": [
+    {
+      "package": "linhay/harmony-next.skills",
+      "displayName": "harmony-next.skills",
+      "whyIncluded": "技能驱动的工作流增强",
+      "category": "other"
+    },
+    {
+      "package": "Jayden-X-L/forkprobe",
+      "displayName": "forkprobe",
+      "whyIncluded": "同一任务跑多个技能对比，自动选优",
+      "category": "other"
+    },
+    {
+      "package": "LayneChai/superpowers-dsh",
+      "displayName": "superpowers-dsh",
+      "whyIncluded": "TDD/调试/计划等开发技能集",
+      "category": "other"
+    },
+    {
+      "package": "JuneLearn/dsh-reasoning-settings",
+      "displayName": "dsh-reasoning-settings",
+      "whyIncluded": "推理设置控制：让模型按任务切换思考档位",
+      "category": "other"
+    },
+    {
+      "package": "Electricitysheep/dsh-tool-turbo",
+      "displayName": "dsh-tool-turbo",
+      "whyIncluded": "按轮次自动优化 reasoning_effort（推理力度）",
+      "category": "other"
+    },
+    {
+      "package": "zhu1090093659/dsh-web-ui",
+      "displayName": "dsh-web-ui",
+      "whyIncluded": "Web UI 增强与皮肤合集：任务看板、Git 图、移动端、皮肤中心",
+      "category": "ui"
+    },
+    {
+      "package": "omdsh-dev/DSH-better-sidebar",
+      "displayName": "DSH-better-sidebar",
+      "whyIncluded": "侧边栏变完整工作台：文件编辑/终端/Git/子代理，支持三方注册扩展页",
+      "category": "ui"
+    },
+    {
+      "package": "omdsh-dev/dsh-genui",
+      "displayName": "dsh-genui",
+      "whyIncluded": "GenUI 内联组件：图表/表单/测验/3D 场景 + action 事件环",
+      "category": "ui"
+    },
+    {
+      "package": "Nagi-ovo/dsh-visualize",
+      "displayName": "dsh-visualize",
+      "whyIncluded": "对话中生成交互式可视化卡片",
+      "category": "ui"
+    },
+    {
+      "package": "BruzWJ/Liang-Saint-Slider",
+      "displayName": "Liang-Saint-Slider",
+      "whyIncluded": "模型与思考力度选择滑条",
+      "category": "ui"
+    },
+    {
+      "package": "omdsh-dev/dsh-annotation",
+      "displayName": "dsh-annotation",
+      "whyIncluded": "划选文字→批注→随消息发送，回复逐条对照",
+      "category": "ui"
+    },
+    {
+      "package": "vlln/dsh-navbar",
+      "displayName": "dsh-navbar",
+      "whyIncluded": "对话节点导航条：右缘节点串快速跳转（官方 bundle 插件）",
+      "category": "ui"
+    },
+    {
+      "package": "ccch1mneyyy/dsh-TUI",
+      "displayName": "dsh-TUI",
+      "whyIncluded": "Claude Code 风全屏 TUI：鲸鱼顶栏/流式思考/双击 Esc 回滚",
+      "category": "ui"
+    },
+    {
+      "package": "hairyf/deepseek-harness-desktop",
+      "displayName": "deepseek-harness-desktop",
+      "whyIncluded": "Tauri 桌面版：5MB 安装包零环境配置，Win/macOS/Linux",
+      "category": "ui"
+    },
+    {
+      "package": "hust-open-atom-club/oh-dsh",
+      "displayName": "oh-dsh",
+      "whyIncluded": "社区发行版：桌面/Web/TUI 三形态统一体验",
+      "category": "ui"
+    },
+    {
+      "package": "liustack/modlens",
+      "displayName": "modlens",
+      "whyIncluded": "生态第一个视觉插件，视觉工作流的基准方案",
+      "category": "media"
+    },
+    {
+      "package": "ysr666/dsh-vision-router",
+      "displayName": "dsh-vision-router",
+      "whyIncluded": "内置免费视觉模型路由，给文本 agent 装眼睛",
+      "category": "media"
+    },
+    {
+      "package": "hellowind777/helloagents",
+      "displayName": "helloagents",
+      "whyIncluded": "agent 能力合集",
+      "category": "workflow"
+    },
+    {
+      "package": "sandbaseai/sandbase-harness",
+      "displayName": "sandbase-harness",
+      "whyIncluded": "CMA 兼容开源 agent 运行时，任意模型可驱动",
+      "category": "workflow"
+    },
+    {
+      "package": "morluto/rea",
+      "displayName": "rea",
+      "whyIncluded": "用 agent 逆向工程任何东西：从应用行为到原生二进制",
+      "category": "workflow"
+    },
+    {
+      "package": "humblebanana/open-record-replay",
+      "displayName": "open-record-replay",
+      "whyIncluded": "macOS 录制回放：把鼠标/键盘/UI 事件存为结构化轨迹供 agent 学习重放",
+      "category": "workflow"
+    },
+    {
+      "package": "cofy-x/axern",
+      "displayName": "axern",
+      "whyIncluded": "AI agent 开源沙箱：不可信代码执行与持久服务",
+      "category": "workflow"
+    },
+    {
+      "package": "alaliqing/claude-paper",
+      "displayName": "claude-paper",
+      "whyIncluded": "跨 agent 论文工具箱：速读摘要/深度研读材料/代码演示 + 本地 Web 阅读器",
+      "category": "productivity"
+    },
+    {
+      "package": "nutshellai-tech/mobius",
+      "displayName": "mobius",
+      "whyIncluded": "编码增强",
+      "category": "productivity"
+    },
+    {
+      "package": "mnemon-dev/mnemon",
+      "displayName": "mnemon",
+      "whyIncluded": "跨 agent、本地优先的持久记忆",
+      "category": "workflow"
+    },
+    {
+      "package": "csyangwen/dsh-memory-evolve",
+      "displayName": "dsh-memory-evolve",
+      "whyIncluded": "五轨记忆 + git 分支托管 + 后台自我进化",
+      "category": "workflow"
+    },
+    {
+      "package": "omdsh-dev/dsh-lark",
+      "displayName": "dsh-lark",
+      "whyIncluded": "飞书 IM bot 频道（官方渠道插件）",
+      "category": "tools"
+    },
+    {
+      "package": "Moeblack/dsh-message-edit",
+      "displayName": "dsh-message-edit",
+      "whyIncluded": "分支式消息编辑、reroll、重试、多版本",
+      "category": "tools"
+    },
+    {
+      "package": "wzj998/ChatCCC",
+      "displayName": "ChatCCC",
+      "whyIncluded": "飞书/微信聊天控制 DSH / Claude Code",
+      "category": "tools"
+    },
+    {
+      "package": "ZSeven-W/dsh-openpencil",
+      "displayName": "dsh-openpencil",
+      "whyIncluded": "OpenPencil 设计稿预览与编辑",
+      "category": "tools"
+    },
+    {
+      "package": "anweat/dsh-web-search-pro",
+      "displayName": "dsh-web-search-pro",
+      "whyIncluded": "增强型持久网页搜索",
+      "category": "tools"
+    },
+    {
+      "package": "dsh-market/dsh-market",
+      "displayName": "dsh-market",
+      "whyIncluded": "持续收录 1000+ 插件的市场：中文搜索 + 五维评分",
+      "category": "tools"
+    },
+    {
+      "package": "LX2000WASD/dsh-web-plugin-manager",
+      "displayName": "dsh-web-plugin-manager",
+      "whyIncluded": "Web UI 一键管理插件：启停/装卸/环境管理",
+      "category": "tools"
+    },
+    {
+      "package": "omdsh-dev/dsh-plugin-check",
+      "displayName": "dsh-plugin-check",
+      "whyIncluded": "插件健康检查：清单协议/patch 格式/构建陷阱",
+      "category": "tools"
+    },
+    {
+      "package": "Ericwong5021/deepseek-plugin-store",
+      "displayName": "deepseek-plugin-store",
+      "whyIncluded": "独立社区插件商店：发现/安装/提交经验证的插件",
+      "category": "tools"
+    },
+    {
+      "package": "crafter-station/petdex",
+      "displayName": "petdex",
+      "whyIncluded": "生态最高星桌宠图鉴",
+      "category": "other"
+    },
+    {
+      "package": "Nagi-ovo/dsh-ads",
+      "displayName": "dsh-ads",
+      "whyIncluded": "把 DSH 变回 2005 门户网站：怀旧广告/小游戏/弹窗",
+      "category": "other"
+    },
+    {
+      "package": "vlln/whale-girl",
+      "displayName": "whale-girl",
+      "whyIncluded": "QQ 宠物形态桌宠：可拖拽/投喂/玩耍",
+      "category": "other"
+    },
+    {
+      "package": "liyupi/dsh-kun-like-pet",
+      "displayName": "dsh-kun-like-pet",
+      "whyIncluded": "小坤桌宠：随 Agent 工作状态切换 9 种动作",
+      "category": "other"
+    }
+  ],
+  "source": "fetched",
+  "refreshedAt": "2026-08-18T12:32:58.393Z"
+}

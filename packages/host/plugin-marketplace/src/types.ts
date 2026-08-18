@@ -349,3 +349,43 @@ export interface PluginMarketplaceCuratedBundleResult {
   /** Sanitized CLI output tail for the error UI; undefined on success. */
   readonly detail?: string | undefined
 }
+
+/**
+ * One locally-recommended plugin surfaced under the marketplace "Featured
+ * picks" header. The list is the same across all desktops that ship the
+ * same build, so the recommendation survives offline startups and tight
+ * networks; updates ride the next release rather than runtime network
+ * fetches.
+ */
+export interface PluginMarketplaceFeaturedPlugin {
+  /** npm package name (matches what the dsh CLI accepts in `plugin add`). */
+  readonly package: string
+  /** Human-readable display name (Chinese, since the desktop is zh-default). */
+  readonly displayName: string
+  /** One-line reason this plugin earned a spot on the local list. */
+  readonly whyIncluded: string
+  /** What kind of plugin this is, used to colour the recommendation card. */
+  readonly category: 'productivity' | 'ui' | 'tools' | 'media' | 'workflow' | 'other'
+}
+
+/**
+ * Snapshot of the locally-recommended plugin list. `source` records how
+ * the list was produced so the UI can offer a refresh hint when it is
+ * not the bundled default.
+ */
+export interface PluginMarketplaceFeaturedPluginsSnapshot {
+  readonly items: readonly PluginMarketplaceFeaturedPlugin[]
+  readonly source: 'bundled-default' | 'fetched'
+  readonly refreshedAt: string
+}
+
+/** Reason the marketplace could not return a featured list. */
+export type PluginMarketplaceFeaturedPluginsErrorCode = 'fetch-failed'
+
+/** Bundled fallback returned when the host cannot reach the curated feed. */
+export interface PluginMarketplaceFeaturedPluginsResult {
+  readonly ok: boolean
+  readonly snapshot?: PluginMarketplaceFeaturedPluginsSnapshot
+  readonly errorCode?: PluginMarketplaceFeaturedPluginsErrorCode
+  readonly errorMessage?: string
+}

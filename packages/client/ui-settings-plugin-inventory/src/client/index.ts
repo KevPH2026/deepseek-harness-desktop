@@ -108,6 +108,24 @@ export function apply(ctx: ClientContext): void {
       }
       return result.value
     },
+    featuredPlugins: async () => {
+      const result = await ctx.remote.pluginMarketplace.featuredPlugins()
+      if (!result.ok) {
+        // The RPC framework wraps the Host result; failure comes back as a
+        // RemoteFailure. We don't surface its details — the marketplace UI
+        // already handles the "no items" case as a separate "error" state.
+        throw new Error('pluginMarketplace.featuredPlugins failed')
+      }
+      // The Host method returns a plain snapshot (not a Result union) on
+      // success, so unwrap it here. Cast through unknown because the wire
+      // type still carries the ok/error shape; only the runtime object
+      // value is the snapshot.
+      return (result.value as unknown) as {
+        items: Array<{ package: string; displayName: string; whyIncluded: string; category: string }>
+        source: 'fetched' | 'bundled-default'
+        refreshedAt: string
+      }
+    },
   })
 
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
