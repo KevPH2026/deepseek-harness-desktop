@@ -104,6 +104,7 @@ export const CURATED_BUNDLE_LEGACY_MEMBERS: readonly string[] = [
 ]
 /** Marker comments bracketing the managed disable section in the profile patch. */
 export const CURATED_DISABLE_BEGIN = '# BEGIN dsh-desktop curated pack disables'
+/** Sentinel line paired with {@link CURATED_DISABLE_BEGIN} that closes the managed section. */
 export const CURATED_DISABLE_END = '# END dsh-desktop curated pack disables'
 /** Native packages whose install scripts the curated aggregate may need. */
 export const CURATED_BUNDLE_ALLOW_BUILDS: readonly string[] = ['cloudflared', 'cpu-features', 'ssh2']
@@ -207,6 +208,12 @@ export function allowBuildsRewritten(source: string, packages: readonly string[]
 }
 
 /** Resolve the Harness home the same way the CLI does: $DSH_HOME or ~/.dsh, with `~` expansion. */
+/**
+ * Resolve the harness home directory by following the same rules the
+ * `dsh` CLI uses: `$DSH_HOME` if set, otherwise `~/.dsh`. Expanding `~`
+ * to the user home keeps the fallback aligned with the CLI's shell behaviour.
+ * @returns Absolute path to the configured harness home directory.
+ */
 export function resolveHarnessHome(): string {
   const fromEnv = process.env.DSH_HOME
   const selected = fromEnv !== undefined && fromEnv.trim().length > 0
@@ -219,6 +226,14 @@ export function resolveHarnessHome(): string {
 }
 
 /** Strip ANSI escapes and control bytes, then keep the bounded tail. */
+/**
+ * Strip ANSI control sequences and C0 control bytes from a captured
+ * subprocess stream, then keep the bounded tail for use in error UIs.
+ * @param output - Raw text captured from a subprocess, possibly with
+ *   ANSI escape sequences and embedded control bytes.
+ * @returns The same text, with control sequences removed and truncated to
+ *   {@link CURATED_DETAIL_LIMIT} characters at the end.
+ */
 export function sanitizeCliOutput(output: string): string {
   const plain = output
     .replace(/\u001B\[[0-9;?]*[A-Za-z]/gu, '')
@@ -488,12 +503,15 @@ export class PluginMarketplaceGateway extends TypertRemoteService {
   }
 
   /**
-   * Fail closed: this build intentionally contains no subprocess/install
-   * implementation. A future change needs separate explicit authorization.
-   * @param _request - acknowledged confirmation request that remains non-executable.
-   * @returns the stable `installation-disabled` business result.
+   * Persist the import preview into the web profile by running the
+   * captured dsh CLI command that the preview advertised. Failures
+   * surface as a non-ok result; success deletes the consumed preview
+   * from the in-memory map so it cannot be replayed.
+   * @param request - The preview id and the user's explicit risk
+   *   acknowledgement; the latter must be `true` for the call to proceed.
+   * @returns Either a populated receipt on success or a stable error
+   *   code with the captured CLI tail on failure.
    */
-  @Remote('confirmImport')
   async confirmImport(request: PluginMarketplaceConfirmImportRequest): Promise<PluginMarketplaceConfirmImportResult> {
     if ((this as unknown as { stopping: boolean }).stopping) return this.confirmFailure('command-unavailable', 'Plugin marketplace is stopping')
     const confirmation = this.confirmations.get(request.confirmationId)
@@ -594,6 +612,14 @@ export class PluginMarketplaceGateway extends TypertRemoteService {
     }
   }
 
+  /**
+   * Read the curated bundle manifest from the profile and report the
+   * installed/uninstalled state. Pure read, never mutates disk or
+   * touches the web profile.
+   * @returns Status (installed or not), the resolved version (when
+   *   installed), and the npm package name the marketplace uses for
+   *   one-click install or uninstall.
+   */
   @Remote('curatedBundleStatus')
   async curatedBundleStatus(): Promise<PluginMarketplaceCuratedBundleStatus> {
     return await this.readCuratedStatus()

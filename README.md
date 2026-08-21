@@ -114,6 +114,8 @@ xattr -cr "/Applications/DeepSeek Harness Desktop.app"
 
 应用只检查这一发布渠道，不会跟随任意仓库提交；新版本发布时菜单会在下载或安装前征求用户确认。
 
+<a id="从源码运行"></a>
+
 ### 从源码运行
 
 前置条件：Apple Silicon Mac、Node.js `^22.19.0 || >=24.0.0`、pnpm，以及一个模型提供方 API Key。

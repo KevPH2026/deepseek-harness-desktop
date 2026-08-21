@@ -102,6 +102,8 @@ DeepSeek Harness 已经提供了强大的插件化 agent harness（智能体框�
 
 完成签名和公证的 Apple Silicon 版本会发布在 [Releases 页面](https://github.com/KevPH2026/deepseek-harness-desktop/releases)。应用只检查这一发布渠道，不会跟随任意仓库提交，并且会在下载或安装更新前征求用户确认。
 
+<a id="从源码运行"></a>
+
 ### 从源码运行
 
 前置条件：Apple Silicon Mac、Node.js `^22.19.0 || >=24.0.0`、pnpm，以及一个模型提供方 API Key。
