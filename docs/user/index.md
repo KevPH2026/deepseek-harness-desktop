@@ -26,7 +26,7 @@ features:
     details: From @linxin666's dsh-web-ui — 10 skins, the skin center, git graph, the liangshen preset, and the whale pet. One click to install, one click to remove.
   - icon: 📊
     title: Clickable usage panel
-    details: Expand the composer stats strip into the full panel: cache read/write, hit rate, context occupancy, and speed metrics — all from durable provider accounting, never estimates.
+    details: Expand the composer stats strip into the full panel (cache read/write, hit rate, context occupancy, and speed metrics) — all from durable provider accounting, never estimates.
   - icon: 🎨
     title: Smart multimodal tools
     details: Let the agent request configured image or video generation only when the deliverable genuinely needs it. Approval-before-spend stays on by default.
