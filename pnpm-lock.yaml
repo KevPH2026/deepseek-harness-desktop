@@ -222,6 +222,9 @@ importers:
       '@deepseek-ai/dsh-host-directory-picker':
         specifier: workspace:^
         version: link:../../packages/host/directory-picker
+      '@deepseek-ai/dsh-host-plugin-marketplace':
+        specifier: workspace:^
+        version: link:../../packages/host/plugin-marketplace
       '@deepseek-ai/dsh-jobs-local':
         specifier: workspace:^
         version: link:../../packages/jobs/jobs-local

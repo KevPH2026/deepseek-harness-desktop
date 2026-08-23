@@ -93,6 +93,8 @@
     "@deepseek-ai/dsh-session-projection-cache": "workspace:^",
     "@deepseek-ai/dsh-user-profile": "workspace:^",
 
+    "@deepseek-ai/dsh-host-plugin-marketplace": "workspace:^",
+
     "commander": "^15.0.0",
     "@deepseek-ai/cordis": "workspace:^",
     "js-yaml": "^4.2.0",
