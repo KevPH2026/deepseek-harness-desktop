@@ -463,6 +463,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-settings':
         specifier: workspace:^
         version: link:../../packages/client/ui-settings
+      '@deepseek-ai/dsh-client-ui-settings-about-community':
+        specifier: workspace:^
+        version: link:../../packages/client/ui-settings-about-community
       '@deepseek-ai/dsh-client-ui-settings-channel-telegram':
         specifier: workspace:^
         version: link:../../packages/client/ui-settings-channel-telegram
@@ -12814,6 +12817,7 @@ packages:
   '@xmldom/xmldom@0.8.14':
     resolution: {integrity: sha512-T4EDRUBVZYRldYApjEJiU0e1stYWaRAX7CuSnKzrpwdZKo53zGV8/pqfzV6FfwNl9YThD2OumQYvqtvjvgG7aQ==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@yarnpkg/cli-dist@4.17.1':
     resolution: {integrity: sha512-2tiSQuJNl/L3QwTdrq6lKWDpkcnp9MGvCT/rIldHcbu3SWfnLdmehvt3eulX1hT7FFt1Gjfq3CesF+kvhFip6g==}
