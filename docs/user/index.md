@@ -2,34 +2,43 @@
 layout: home
 hero:
   name: DeepSeek Harness Desktop
-  text: From agent conversation to finished work
-  tagline: A community macOS workspace for coding, tools, smart media generation, paired Telegram control, and scenario-based plugins.
+  text: v0.1.0-beta.3 · one-click community desktop workspace
+  tagline: Coding, tools, smart media generation, paired Telegram control, curated community pack, clickable usage panel, and scenario-based plugins — all in a supervised macOS app.
   image:
     src: /favicon.svg
     alt: DeepSeek Harness icon
   actions:
     - theme: brand
-      text: View releases
-      link: https://github.com/KevPH2026/deepseek-harness-desktop/releases
+      text: Download v0.1.0-beta.3
+      link: https://github.com/KevPH2026/deepseek-harness-desktop/releases/tag/v0.1.0-beta.3
     - theme: alt
       text: Star on GitHub
       link: https://github.com/KevPH2026/deepseek-harness-desktop
+    - theme: alt
+      text: Full feature tour (deepseeklab.org)
+      link: https://deepseeklab.org
 features:
   - icon: 🧭
     title: Agent workspace
     details: Keep files, tools, approvals, sessions, and execution in one focused desktop app.
+  - icon: 🎁
+    title: Curated community pack
+    details: From @linxin666's dsh-web-ui — 10 skins, the skin center, git graph, the liangshen preset, and the whale pet. One click to install, one click to remove.
+  - icon: 📊
+    title: Clickable usage panel
+    details: Expand the composer stats strip into the full panel: cache read/write, hit rate, context occupancy, and speed metrics — all from durable provider accounting, never estimates.
   - icon: 🎨
     title: Smart multimodal tools
-    details: Let the agent request configured image or video generation only when the deliverable needs it.
+    details: Let the agent request configured image or video generation only when the deliverable genuinely needs it. Approval-before-spend stays on by default.
   - icon: 📱
     title: Telegram phone control
-    details: Pair one private account on the desktop, send tasks from your phone, and receive the final Agent response in the same chat.
+    details: Pair one private account on the desktop, send tasks from your phone, and receive the safe Agent's final response in the same chat. Phone tasks run inside an isolated telegram-safe preset.
   - icon: 🧩
-    title: Community plugins
-    details: Discover by scenario, inspect trust signals, validate selected repositories, and review import risks while installation remains disabled.
+    title: Community plugin marketplace
+    details: Discover by scenario, inspect trust signals, validate selected repositories, verify manifests on demand, and review import risks while installation stays disabled.
   - icon: 🔄
     title: Release-aware updates
-    details: Read release notes and choose when a signed GitHub Release is downloaded and installed.
+    details: Read release notes and choose when a signed GitHub Release is downloaded and installed. Local unsigned builds fail safely and never bypass macOS trust protections.
 ---
 
 # DeepSeek Harness Desktop

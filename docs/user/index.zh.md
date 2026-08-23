@@ -2,34 +2,43 @@
 layout: home
 hero:
   name: DeepSeek Harness Desktop
-  text: 从 agent 对话走到真正完成
-  tagline: 面向编程、工具、智能媒体生成、Telegram 手机控制和场景化插件的社区 macOS 工作区。
+  text: v0.1.0-beta.3 · 一键安装的社区桌面工作区
+  tagline: 编程、工具、智能媒体生成、Telegram 手机控制、精选社区全家桶、用量面板和场景化插件 —— 全部在受监管的 macOS 应用里。
   image:
     src: /favicon.svg
     alt: DeepSeek Harness 图标
   actions:
     - theme: brand
-      text: 查看版本
-      link: https://github.com/KevPH2026/deepseek-harness-desktop/releases
+      text: 下载 v0.1.0-beta.3
+      link: https://github.com/KevPH2026/deepseek-harness-desktop/releases/tag/v0.1.0-beta.3
     - theme: alt
       text: 在 GitHub 上 Star
       link: https://github.com/KevPH2026/deepseek-harness-desktop
+    - theme: alt
+      text: 完整功能导览(deepseeklab.org)
+      link: https://deepseeklab.org
 features:
   - icon: 🧭
     title: Agent 工作区
     details: 把文件、工具、审批、会话和执行集中在一个专注的桌面应用中。
+  - icon: 🎁
+    title: 精选社区全家桶
+    details: 来自 @linxin666 的 dsh-web-ui —— 10 款皮肤、皮肤中心、Git 图谱、梁神模式预设、鲸鱼娘桌面宠物 —— 一键安装、一键卸载。
+  - icon: 📊
+    title: 可点击的用量面板
+    details: 输入框下方统计条可点击展开：缓存读写、命中率、上下文占用与速度指标，全部来自提供方持久账目，不做估算。
   - icon: 🎨
     title: 智能多模态工具
-    details: 只有当交付物确实需要时，agent 才会请求已配置的图片或视频生成能力。
+    details: 只有当交付物确实需要时，agent 才会请求已配置的图片或视频生成能力，默认采用付费前审批。
   - icon: 📱
     title: Telegram 手机控制
-    details: 在电脑上绑定一个私聊账号，从手机发送任务，并在同一聊天里收到 Agent 的最终回复。
+    details: 在电脑上绑定一个私聊账号，从手机发送任务，在同一聊天里收到安全 Agent 的最终回复，所有手机任务运行在独立的 telegram-safe 预设里。
   - icon: 🧩
-    title: 社区插件
-    details: 按场景发现插件、检查信任信息、验证所选仓库，并在安装保持关闭时查看导入风险。
+    title: 社区插件市场
+    details: 按场景发现插件、检查信任信息、验证所选仓库、按需验证 manifest，并在安装保持关闭时查看导入风险。
   - icon: 🔄
     title: 面向 Release 的更新
-    details: 阅读版本说明，并自行决定何时下载和安装已签名的 GitHub Release。
+    details: 阅读版本说明，自行决定何时下载和安装已签名的 GitHub Release，本地未签名版本安全失败，不会绕过 macOS 信任保护。
 ---
 
 # DeepSeek Harness Desktop
