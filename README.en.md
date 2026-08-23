@@ -96,6 +96,8 @@ DeepSeek Harness already provides a capable plugin-based agent harness. This com
 - Community partners and ordinary provider offers are labeled separately.
 - No provider is presented as a sponsor or partner without an actual verified relationship.
 
+<a id="get-started"></a>
+
 ## Get started
 
 ### Direct download
@@ -113,6 +115,8 @@ xattr -cr "/Applications/DeepSeek Harness Desktop.app"
 ### Auto-update channel
 
 The app checks only this release channel, never arbitrary repository commits, and asks before downloading or installing an update.
+
+<a id="run-from-source"></a>
 
 ### Run from source
 

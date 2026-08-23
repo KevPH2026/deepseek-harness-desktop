@@ -102,6 +102,13 @@ Telegram provider. Pairing Remotes change only local pairing state; they never s
 @Remote enable(): Promise<TelegramEnableResult>
 
 /**
+ * Persist the optional Bot API proxy override and restart polling when live.
+ * @param request - Empty string clears the override; otherwise a host-addressed http(s) URL.
+ * @returns Updated safe status, or a stable validation failure.
+ */
+@Remote setProxy(request: TelegramSetProxyRequest): Promise<TelegramSetProxyResult>
+
+/**
  * Stop polling while retaining pending pairing and the confirmed account.
  * @returns Disabled safe status after the poller has stopped.
  */
@@ -114,5 +121,5 @@ Telegram provider. Pairing Remotes change only local pairing state; they never s
 @Remote revoke(): Promise<TelegramChannelStatus>
 ```
 
-Source: [`packages/interaction/channel-telegram/src/index.ts:252`](../../packages/interaction/channel-telegram/src/index.ts)
+Source: [`packages/interaction/channel-telegram/src/index.ts:258`](../../packages/interaction/channel-telegram/src/index.ts)
 <!-- END GENERATED cordis-surface -->

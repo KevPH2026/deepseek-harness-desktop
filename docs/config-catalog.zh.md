@@ -906,10 +906,12 @@ export interface Config {
   readonly minValidationIntervalMs: number
   /** Maximum milliseconds allowed for one complete pinned validation. */
   readonly validationTimeoutMs: number
+  /** Maximum milliseconds allowed for one curated bundle install or uninstall. */
+  readonly curatedInstallTimeoutMs: number
 }
 ```
 
-来源：[`packages/host/plugin-marketplace/src/index.ts:61`](../packages/host/plugin-marketplace/src/index.ts)
+来源：[`packages/host/plugin-marketplace/src/index.ts:245`](../packages/host/plugin-marketplace/src/index.ts)
 
 <a id="deepseek-aidsh-host-webserver"></a>
 

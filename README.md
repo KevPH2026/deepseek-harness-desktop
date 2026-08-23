@@ -4,7 +4,7 @@
 
 # DeepSeek Harness Desktop
 
-**中文** | [English](README.en.md)
+[中文](README.zh.md)
 
 <p align="center"><strong>一个支持编程、工具、多模态生成，还能通过 Telegram 在手机上继续研究和写作任务的桌面 agent 工作区。</strong></p>
 
@@ -96,6 +96,8 @@ DeepSeek Harness 已经提供了强大的插件化 agent harness（智能体框�
 - 社区合作伙伴与普通提供方优惠会被分别标注。
 - 没有真实且经过核验的关系，就不会把任何提供方描述为赞助商或合作伙伴。
 
+<a id="get-started"></a>
+
 ## 开始使用
 
 ### 直接下载安装
@@ -114,6 +116,7 @@ xattr -cr "/Applications/DeepSeek Harness Desktop.app"
 
 应用只检查这一发布渠道，不会跟随任意仓库提交；新版本发布时菜单会在下载或安装前征求用户确认。
 
+<a id="run-from-source"></a>
 <a id="从源码运行"></a>
 
 ### 从源码运行
