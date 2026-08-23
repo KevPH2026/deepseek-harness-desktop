@@ -59,6 +59,7 @@
     "@deepseek-ai/dsh-channel-agent": "workspace:^",
     "@deepseek-ai/dsh-channel-telegram": "workspace:^",
     "@deepseek-ai/dsh-client-ui-layout": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-settings-about-community": "workspace:^",
     "@deepseek-ai/dsh-command-compact": "workspace:^",
     "@deepseek-ai/dsh-compaction-basic": "workspace:^",
     "@deepseek-ai/dsh-compaction-tool-result-pruner": "workspace:^",
