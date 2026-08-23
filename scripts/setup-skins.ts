@@ -16,9 +16,10 @@
  * `node_modules/@deepseek-ai/dsh/lib/bin.js`, so it works whether the
  * command runs from the repo root or from `apps/desktop`.
  */
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { dirname, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -52,9 +53,6 @@ function locateDshBin(): string | undefined {
 function currentProfileDependencies(): Set<string> {
   // Import the profile manifest dynamically so a failed lookup shows
   // the same error to the user as a stale profile.
-  const { readFileSync } = require('node:fs') as typeof import('node:fs')
-  const { homedir } = require('node:os') as typeof import('node:os')
-  const { join } = require('node:path') as typeof import('node:path')
   const home = process.env.DSH_HOME ?? join(homedir(), '.dsh')
   const candidates = [join(home, 'profiles/web/package.json'), join(home, 'profiles/web/package.json.tmp')]
   for (const path of candidates) {
@@ -99,4 +97,4 @@ console.log(`setup-skins: installing ${missing.length} package(s) into the web p
 for (const pkg of missing) {
   runPlugin(bin, ['plugin', '--profile', 'web', 'add', pkg])
 }
-console.log(`setup-skins: done. Restart the desktop app to see the new skins, the whale pet, and the skin-center shortcut.`)
+console.log('setup-skins: done. Restart the desktop app to see the new skins, the whale pet, and the skin-center shortcut.')
