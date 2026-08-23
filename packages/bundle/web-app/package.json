@@ -66,11 +66,14 @@
     "@deepseek-ai/dsh-client-ui-goal": "workspace:^",
     "@deepseek-ai/dsh-client-ui-layout": "workspace:^",
     "@deepseek-ai/dsh-client-ui-model-selection": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-settings-about-community": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-settings-channel-telegram": "workspace:^",
     "@deepseek-ai/dsh-client-ui-settings-models": "workspace:^",
     "@deepseek-ai/dsh-client-ui-settings-plugin-inventory": "workspace:^",
     "@deepseek-ai/dsh-client-ui-permission-presets": "workspace:^",
     "@deepseek-ai/dsh-client-ui-plan": "workspace:^",
     "@deepseek-ai/dsh-client-ui-settings-plugins": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-settings-profile": "workspace:^",
     "@deepseek-ai/dsh-client-ui-user-questions": "workspace:^",
     "@deepseek-ai/dsh-client-ui-settings": "workspace:^",
     "@deepseek-ai/dsh-client-ui-settings-general": "workspace:^",
@@ -89,6 +92,7 @@
     "@deepseek-ai/dsh-code-runtime-worker-thread": "workspace:^",
     "@deepseek-ai/dsh-cordis-client-runner": "workspace:^",
     "@deepseek-ai/dsh-cordis-host-runner": "workspace:^",
+    "@deepseek-ai/dsh-media-generation": "workspace:^",
     "@deepseek-ai/dsh-web-frontend": "workspace:^",
     "@deepseek-ai/dsh-host-frontend-static": "workspace:^",
     "@deepseek-ai/dsh-host-apiproxy": "workspace:^",
@@ -113,6 +117,7 @@
     "@deepseek-ai/schemastery": "workspace:^",
     "commander": "^15.0.0",
     "open": "^11.0.0"
+
   },
   "peerDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",

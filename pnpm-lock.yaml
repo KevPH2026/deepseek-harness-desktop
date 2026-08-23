@@ -1789,6 +1789,12 @@ importers:
       '@deepseek-ai/dsh-client-ui-settings':
         specifier: workspace:^
         version: link:../../client/ui-settings
+      '@deepseek-ai/dsh-client-ui-settings-about-community':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-about-community
+      '@deepseek-ai/dsh-client-ui-settings-channel-telegram':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-channel-telegram
       '@deepseek-ai/dsh-client-ui-settings-general':
         specifier: workspace:^
         version: link:../../client/ui-settings-general
@@ -1801,6 +1807,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-settings-plugins':
         specifier: workspace:^
         version: link:../../client/ui-settings-plugins
+      '@deepseek-ai/dsh-client-ui-settings-profile':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-profile
       '@deepseek-ai/dsh-client-ui-sidebar':
         specifier: workspace:^
         version: link:../../client/ui-sidebar
@@ -1870,6 +1879,9 @@ importers:
       '@deepseek-ai/dsh-launch-environment':
         specifier: workspace:^
         version: link:../../util/launch-environment
+      '@deepseek-ai/dsh-media-generation':
+        specifier: workspace:^
+        version: link:../../media/media-generation
       '@deepseek-ai/dsh-message-feedback':
         specifier: workspace:^
         version: link:../../feedback/message-feedback
